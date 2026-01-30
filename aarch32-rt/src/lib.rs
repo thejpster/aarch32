@@ -193,14 +193,16 @@
 //! The symbol `_svc_handler` should be an `extern "C"` function. It is called
 //! in SVC mode when an [Supervisor Call Exception] occurs.
 //!
-//! [Supervisor CalL Exception]:
+//! [Supervisor Call Exception]:
 //!     https://developer.arm.com/documentation/ddi0406/c/System-Level-Architecture/The-System-Level-Programmers--Model/Exception-descriptions/Supervisor-Call--SVC--exception?lang=en
 //!
 //! Returning from this function will cause execution to resume at the function
 //! the triggered the exception, immediately after the SVC instruction. You
 //! cannot control where execution resumes. The function is passed the literal
 //! integer argument to the `svc` instruction, which is extracted from the
-//! machine code for you by the default assembly trampoline.
+//! machine code for you by the default assembly trampoline, along with
+//! registers r0 through r7, in the form of a reference to a `Frame`
+//! structure.
 //!
 //! Our linker script PROVIDEs a default `_svc_handler` symbol which is an alias
 //! for the `_default_handler` function. You can override it by defining your
@@ -208,8 +210,9 @@
 //!
 //! ```rust
 //! #[unsafe(no_mangle)]
-//! extern "C" fn _svc_handler(svc: u32) {
+//! extern "C" fn _svc_handler(arg: u32, frame: &aarch32_rt::Frame) -> u32 {
 //!     // do stuff here
+//!     todo!()
 //! }
 //! ```
 //!
@@ -220,8 +223,9 @@
 //! use aarch32_rt::exception;
 //!
 //! #[exception(SupervisorCall)]
-//! fn my_svc_handler(arg: u32) {
+//! fn svc_handler(arg: u32, frame: &aarch32_rt::Frame) -> u32 {
 //!     // do stuff here
+//!     todo!()
 //! }
 //! ```
 //!
@@ -546,83 +550,74 @@ core::arch::global_asm!(
     "#
 );
 
-/// This macro expands to code for saving context on entry to an exception
-/// handler. It ensures the stack pointer is 8 byte aligned on exit.
+/// Arguments stacked on interrupt
 ///
-/// EABI specifies R4 - R11 as callee-save, and so we don't preserve them
-/// because any C function we call to handle the exception will
-/// preserve/restore them itself as required.
+/// This struct is very carefully designed to match the layout of the
+/// registers pushed to the stack in our SVC handler.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[repr(C)]
+pub struct Frame {
+    pub r0: u32,
+    pub r1: u32,
+    pub r2: u32,
+    pub r3: u32,
+}
+
+/// This macro expands to code for saving FPU context on entry to an exception
+/// handler. It pushes a multiple of eight bytes to preserve AAPCS alignment.
+/// It may damage R0-R3.
 ///
-/// It should match `restore_context!`.
+/// It should match `restore_fpu_context!`
 ///
 /// On entry to this block, we assume that we are in exception context.
 #[cfg(not(any(target_abi = "eabihf", feature = "eabi-fpu")))]
 #[macro_export]
-macro_rules! save_context {
+macro_rules! save_fpu_context {
     () => {
-        r#"
-        // save preserved registers (and gives us some working area)
-        push    {{ r0-r3 }}
-        // align SP down to eight byte boundary
-        mov     r0, sp
-        and     r0, r0, 7
-        sub     sp, r0
-        // push alignment amount, and final preserved register
-        push    {{ r0, r12 }}
-        "#
+        ""
     };
 }
 
 /// This macro expands to code for restoring context on exit from an exception
 /// handler.
 ///
-/// It should match `save_context!`.
+/// It should match `save_fpu_context!`.
 #[cfg(not(any(target_abi = "eabihf", feature = "eabi-fpu")))]
 #[macro_export]
-macro_rules! restore_context {
+macro_rules! restore_fpu_context {
     () => {
-        r#"
-        // restore alignment amount, and preserved register
-        pop     {{ r0, r12 }}
-        // restore pre-alignment SP
-        add     sp, r0
-        // restore more preserved registers
-        pop     {{ r0-r3 }}
-        "#
+        ""
     };
 }
 
-/// This macro expands to code for restoring context on exit from an exception
-/// handler. It saves FPU state, assuming 16 DP registers (a 'D16' or 'D16SP'
+/// This macro expands to code for saving FPU context on entry to an exception
+/// handler. It pushes a multiple of eight bytes to preserve AAPCS alignment.
+/// It may damage R0-R3.
+///
+/// It should match `restore_fpu_context!`
+///
+/// On entry to this block, we assume that we are in exception context.
+///
+/// This version saves FPU state, assuming 16 DP registers (a 'D16' or 'D16SP'
 /// FPU configuration). Note that SP-only FPUs still have DP registers
 /// - each DP register holds two SP values.
 ///
-/// EABI specifies R4 - R11 and D8-D15 as callee-save, and so we don't
+/// EABI specifies D8-D15 as callee-save, and so we don't
 /// preserve them because any C function we call to handle the exception will
 /// preserve/restore them itself as required.
-///
-/// It should match `restore_context!`.
 #[cfg(all(
     any(target_abi = "eabihf", feature = "eabi-fpu"),
     not(feature = "fpu-d32")
 ))]
 #[macro_export]
-macro_rules! save_context {
+macro_rules! save_fpu_context {
     () => {
         r#"
-        // save preserved registers (and gives us some working area)
-        push    {{ r0-r3 }}
         // save all D16 FPU context, except D8-D15
         vpush   {{ d0-d7 }}
         vmrs    r0, FPSCR
         vmrs    r1, FPEXC
         push    {{ r0-r1 }}
-        // align SP down to eight byte boundary
-        mov     r0, sp
-        and     r0, r0, 7
-        sub     sp, r0
-        // push alignment amount, and final preserved register
-        push    {{ r0, r12 }}
         "#
     };
 }
@@ -631,58 +626,49 @@ macro_rules! save_context {
 /// handler. It restores FPU state, assuming 16 DP registers (a 'D16' or
 /// 'D16SP' FPU configuration).
 ///
-/// It should match `save_context!`.
+/// It should match `save_fpu_context!`.
 #[cfg(all(
     any(target_abi = "eabihf", feature = "eabi-fpu"),
     not(feature = "fpu-d32")
 ))]
 #[macro_export]
-macro_rules! restore_context {
+macro_rules! restore_fpu_context {
     () => {
         r#"
-        // restore alignment amount, and preserved register
-        pop     {{ r0, r12 }}
-        // restore pre-alignment SP
-        add     sp, r0
         // restore all D16 FPU context, except D8-D15
         pop     {{ r0-r1 }}
         vmsr    FPEXC, r1
         vmsr    FPSCR, r0
         vpop    {{ d0-d7 }}
-        // restore more preserved registers
-        pop     {{ r0-r3 }}
         "#
     };
 }
 
-/// This macro expands to code for saving context on entry to an exception
-/// handler. It saves FPU state assuming 32 DP registers (a 'D32' FPU
+/// This macro expands to code for saving FPU context on entry to an exception
+/// handler. It pushes a multiple of eight bytes to preserve AAPCS alignment.
+/// It may damage R0-R3.
+///
+/// It should match `restore_fpu_context!`
+///
+/// On entry to this block, we assume that we are in exception context.
+///
+/// This version saves FPU state assuming 32 DP registers (a 'D32' FPU
 /// configuration).
 ///
-/// EABI specifies R4 - R11 and D8-D15 as callee-save, and so we don't
+/// EABI specifies D8-D15 as callee-save, and so we don't
 /// preserve them because any C function we call to handle the exception will
 /// preserve/restore them itself as required.
-///
-/// It should match `restore_context!`.
 #[cfg(all(any(target_abi = "eabihf", feature = "eabi-fpu"), feature = "fpu-d32"))]
 #[macro_export]
-macro_rules! save_context {
+macro_rules! save_fpu_context {
     () => {
         r#"
-        // save preserved registers (and gives us some working area)
-        push    {{ r0-r3 }}
         // save all D32 FPU context, except D8-D15
         vpush   {{ d0-d7 }}
         vpush   {{ d16-d31 }}
         vmrs    r0, FPSCR
         vmrs    r1, FPEXC
         push    {{ r0-r1 }}
-        // align SP down to eight byte boundary
-        mov     r0, sp
-        and     r0, r0, 7
-        sub     sp, r0
-        // push alignment amount, and final preserved register
-        push    {{ r0, r12 }}
         "#
     };
 }
@@ -691,24 +677,18 @@ macro_rules! save_context {
 /// handler. It restores FPU state, assuming 32 DP registers (a 'D32' FPU
 /// configuration).
 ///
-/// It should match `save_context!`.
+/// It should match `save_fpu_context!`.
 #[cfg(all(any(target_abi = "eabihf", feature = "eabi-fpu"), feature = "fpu-d32"))]
 #[macro_export]
-macro_rules! restore_context {
+macro_rules! restore_fpu_context {
     () => {
         r#"
-        // restore alignment amount, and preserved register
-        pop     {{ r0, r12 }}
-        // restore pre-alignment SP
-        add     sp, r0
         // restore all D32 FPU context, except D8-D15
         pop     {{ r0-r1 }}
         vmsr    FPEXC, r1
         vmsr    FPSCR, r0
         vpop    {{ d16-d31 }}
         vpop    {{ d0-d7 }}
-        // restore more preserved registers
-        pop     {{ r0-r3 }}
         "#
     };
 }
