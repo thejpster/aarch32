@@ -1,4 +1,4 @@
-//! IRQ handler for Armv7 and higher
+//! IRQ handler for for Armv7 and higher
 
 #[cfg(target_arch = "arm")]
 core::arch::global_asm!(
@@ -14,33 +14,26 @@ core::arch::global_asm!(
     .global _asm_default_irq_handler
     .type _asm_default_irq_handler, %function
     _asm_default_irq_handler:
-        // make sure we jump back to the right place
-        sub     lr, lr, 4
-        // The hardware has copied CPSR to SPSR_irq and LR to LR_irq for us.
-        // Now push SPSR_irq and LR_irq to the SYS stack (because that's the
-        // mode we're in when we pop)
-        srsfd   sp!, #{sys_mode}
-        // switch to system mode so we can handle another interrupt
-        // (because if we interrupt irq mode we trash our own shadow registers)
-        cps     #{sys_mode}
-        // we also need to save LR, so we can be re-entrant
-        push    {{lr}}
-        // save state to the system stack (adjusting SP for alignment)
-    "#,
-    crate::save_context!(),
+        sub     lr, lr, 4                 // make sure we jump back to the right place
+        srsfd   sp!, #{sys_mode}          // store return state to SYS stack
+        cps     #{sys_mode}               // switch to system mode so we can handle another interrupt (because if we interrupt irq mode we trash our own shadow registers)
+        push    {{ lr }}                  // save adjusted LR to SYS stack
+        mov     lr, sp                    // align SP down to eight byte boundary using LR
+        and     lr, lr, 7                 //
+        sub     sp, lr                    // SP now aligned - only push 64-bit values from here
+        push    {{ r0-r3, r12, lr }}      // push alignment amount (in LR) and preserved registers
+     "#,
+    crate::save_fpu_context!(),
     r#"
-        // call C handler
-        bl      _irq_handler
-        // restore from the system stack
+        bl      _irq_handler              // call C handler (they may choose to re-enable interrupts)
     "#,
-    crate::restore_context!(),
+    crate::restore_fpu_context!(),
     r#"
-        // restore LR
-        pop     {{lr}}
-        // pop CPSR and LR from the stack (which also restores the mode)
-        rfefd   sp!
+        pop     {{ r0-r3, r12, lr }}      // restore alignment amount (in LR) and preserved registers
+        add     sp, lr                    // restore SP alignment using LR
+        pop     {{ lr }}                  // restore adjusted LR
+        rfefd   sp!                       // return from exception
     .size _asm_default_irq_handler, . - _asm_default_irq_handler
-
     "#,
     sys_mode = const crate::ProcessorMode::Sys as u8,
 );

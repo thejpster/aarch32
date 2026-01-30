@@ -16,39 +16,32 @@ core::arch::global_asm!(
     .global _asm_default_undefined_handler
     .type _asm_default_undefined_handler, %function
     _asm_default_undefined_handler:
-        // state save from compiled code
-        stmfd   sp!, {{ r0 }}
-        mrs     r0, spsr
-        stmfd   sp!, {{ r0 }}
-        // First adjust LR for two purposes: Passing the faulting instruction to the C handler,
-        // and to return to the failing instruction after the C handler returns.
-        // Load processor status for the calling code
-        mrs     r0, spsr
-        // Was the code that triggered the exception in Thumb state?
-        tst     r0, {t_bit}
-        // Subtract 2 in Thumb Mode, 4 in Arm Mode - see p.1206 of the ARMv7-A architecture manual.
-        ite     eq
-        subeq   lr, lr, #4
-        subne   lr, lr, #2
-        // now do our standard exception save (which saves the 'wrong' R0)
+        push    {{ r12 }}                 // save R12 - can now use it
+        mrs     r12, spsr                 // grab SPSR using R12
+        push    {{ r12 }}                 // save SPSR value
+        tst     r12, {t_bit}              // Was the code that triggered the exception in Thumb state?
+        ite     eq                        // Adjust LR to point to faulting instruction - see p.1206 of the ARMv7-A architecture manual.
+        subeq   lr, lr, #4                // Subtract 4 in Arm Mode
+        subne   lr, lr, #2                // Subtract 2 in Thumb Mode
+        mov     r12, sp                   // align SP down to eight byte boundary using R12
+        and     r12, r12, 7               //
+        sub     sp, r12                   // SP now aligned - only push 64-bit values from here
+        push    {{ r0-r4, r12 }}          // push alignment amount, and preserved registers - can now use R0-R3 (R4 is just padding)
     "#,
-    crate::save_context!(),
+    crate::save_fpu_context!(),
     r#"
-        // Pass the faulting instruction address to the handler.
-        mov     r0, lr
-        // call C handler
-        bl      _undefined_handler
-        // if we get back here, assume they returned a new LR in r0
-        mov     lr, r0
-        // do our standard restore (with the 'wrong' R0)
+        mov     r0, lr                    // Pass the faulting instruction address to the handler.
+        bl      _undefined_handler        // call C handler
+        mov     lr, r0                    // if we get back here, assume they returned a new LR in r0
     "#,
-    crate::restore_context!(),
+    crate::restore_fpu_context!(),
     r#"
-        // Return from the asm handler
-        ldmia   sp!, {{ r0 }}
-        msr     spsr, r0
-        ldmia   sp!, {{ r0 }}
-        movs    pc, lr
+        pop     {{ r0-r4, r12 }}          // restore preserved registers, dummy value, and alignment amount
+        add     sp, r12                   // restore SP alignment using R12
+        pop     {{ r12 }}                 // restore SPSR using R12
+        msr     spsr_cxsf, r12            //
+        pop     {{ r12 }}                 // restore R12
+        movs    pc, lr                    // return from exception
     .size _asm_default_undefined_handler, . - _asm_default_undefined_handler
     "#,
     t_bit = const { crate::Cpsr::new_with_raw_value(0).with_t(true).raw_value() },
