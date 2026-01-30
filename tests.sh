@@ -38,6 +38,10 @@ my_diff() {
     # output
     # - Fix the CRLF line endings in the files on disk, because git adds them to
     # text files.
+    if [ "${UPDATE_OUT}" == "1" ]; then
+        # echo "Copying $file_b to $file_a... in $(pwd)"
+        cp $file_b $file_a
+    fi
     if [ ! -f $1 ]; then
         echo "File $1 is missing?!"
         return 1
@@ -47,9 +51,6 @@ my_diff() {
     else
         diff <(cat $file_a | tr -d '\r') <(cat $file_b | sed 's~\\\\~/~g')
         result=$?
-        if [ "${UPDATE_OUT}" == "1" ]; then
-            cp $file_b $file_a
-        fi
         return $result
     fi
 }
