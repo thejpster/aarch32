@@ -523,7 +523,10 @@ pub extern "C" fn _default_handler() {
 }
 
 // The Interrupt Vector Table, and some default assembly-language handler.
+//
 // Needs to be aligned to 5bits/2^5 to be stored correctly in VBAR
+//
+// Need to be assembled as Arm-mode because the Thumb Exception bit is cleared
 #[cfg(target_arch = "arm")]
 core::arch::global_asm!(
     r#"
@@ -898,8 +901,8 @@ core::arch::global_asm!(
         // Set stack pointer (right after) and mask interrupts for System mode (Mode 0x1F)
         msr     cpsr_c, {sys_mode}
         ldr	r13, =_sys_stack
-        // Clear the Thumb Exception bit because all our targets are currently
-        // for Arm (A32) mode
+        // Clear the Thumb Exception bit because all vector table is written in Arm assembly
+        // even on Thumb targets.
         mrc     p15, 0, r1, c1, c0, 0
         bic     r1, #{te_bit}
         mcr     p15, 0, r1, c1, c0, 0
