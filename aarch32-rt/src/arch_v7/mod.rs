@@ -1,6 +1,6 @@
 //! ASM routines for for Armv7 and higher
 
-mod abort;
-mod interrupt;
-mod svc;
-mod undefined;
+pub mod abort;
+pub mod interrupt;
+pub mod svc;
+pub mod undefined;

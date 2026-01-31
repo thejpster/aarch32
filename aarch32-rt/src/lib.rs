@@ -501,7 +501,7 @@ pub use aarch32_rt_macros::{entry, exception, irq};
         arm_architecture = "v8-r"
     )
 ))]
-mod arch_v7;
+pub mod arch_v7;
 
 #[cfg(all(
     target_arch = "arm",
@@ -511,7 +511,7 @@ mod arch_v7;
         arm_architecture = "v8-r"
     ))
 ))]
-mod arch_v4;
+pub mod arch_v4;
 
 /// Our default exception handler.
 ///
@@ -524,11 +524,15 @@ pub extern "C" fn _default_handler() {
     }
 }
 
-// The Interrupt Vector Table, and some default assembly-language handler.
+// The Interrupt Vector Table.
 //
-// Needs to be aligned to 5bits/2^5 to be stored correctly in VBAR
+// Needs to be aligned to 5 bits / 32 bytes to be stored correctly in VBAR.
 //
-// Need to be assembled as Arm-mode because the Thumb Exception bit is cleared
+// Need to be assembled as Arm-mode because the Thumb Exception bit is cleared.
+//
+// This is not a naked function, because setting the alignment of a naked
+// function is not currently stable, and we need to ensure this table is 32-byte
+// aligned.
 #[cfg(target_arch = "arm")]
 core::arch::global_asm!(
     r#"
@@ -695,18 +699,12 @@ macro_rules! restore_fpu_context {
 
 // Generic FIQ placeholder that's just a spin-loop
 #[cfg(target_arch = "arm")]
-core::arch::global_asm!(
-    r#"
-    .section .text._asm_default_fiq_handler
-
-    // Our default FIQ handler
-    .global _asm_default_fiq_handler
-    .type _asm_default_fiq_handler, %function
-    _asm_default_fiq_handler:
-        b       _asm_default_fiq_handler
-    .size    _asm_default_fiq_handler, . - _asm_default_fiq_handler
-    "#,
-);
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+#[instruction_set(arm::a32)]
+extern "C" fn _asm_default_fiq_handler() {
+    core::arch::naked_asm!("b       .");
+}
 
 /// This macro expands to code to turn on the FPU
 #[cfg(all(target_arch = "arm", any(target_abi = "eabihf", feature = "eabi-fpu")))]
@@ -741,169 +739,160 @@ macro_rules! fpu_enable {
 // Stack location and sizes are taken from sections defined in linker script
 // We set up our stacks and `kmain` in system mode.
 #[cfg(target_arch = "arm")]
-core::arch::global_asm!(
-    r#"
-    // Work around https://github.com/rust-lang/rust/issues/127269
-    .fpu vfp2
-
-    // Configure a stack for every mode. Leaves you in sys mode.
-    //
-    .section .text._stack_setup_preallocated
-    .global _stack_setup_preallocated
-    .type _stack_setup_preallocated, %function
-    _stack_setup_preallocated:
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+#[instruction_set(arm::a32)]
+extern "C" fn _stack_setup_preallocated() {
+    core::arch::naked_asm!(
         // Save LR from whatever mode we're currently in
-        mov     r2, lr
+        "mov     r2, lr",
         // (we might not be in the same mode when we return).
         // Set stack pointer and mask interrupts for UND mode (Mode 0x1B)
-        msr     cpsr_c, {und_mode}
-        ldr	r13, =_und_stack
+        "msr     cpsr_c, {und_mode}",
+        "ldr     r13, =_und_stack",
         // Set stack pointer (right after) and mask interrupts for SVC mode (Mode 0x13)
-        msr     cpsr_c, {svc_mode}
-        ldr	r13, =_svc_stack
+        "msr     cpsr_c, {svc_mode}",
+        "ldr     r13, =_svc_stack",
         // Set stack pointer (right after) and mask interrupts for ABT mode (Mode 0x17)
-        msr     cpsr_c, {abt_mode}
-        ldr	r13, =_abt_stack
+        "msr     cpsr_c, {abt_mode}",
+        "ldr     r13, =_abt_stack",
         // Set stack pointer (right after) and mask interrupts for IRQ mode (Mode 0x12)
-        msr     cpsr_c, {irq_mode}
-        ldr	r13, =_irq_stack
+        "msr     cpsr_c, {irq_mode}",
+        "ldr     r13, =_irq_stack",
         // Set stack pointer (right after) and mask interrupts for FIQ mode (Mode 0x11)
-        msr     cpsr_c, {fiq_mode}
-        ldr	r13, =_fiq_stack
+        "msr     cpsr_c, {fiq_mode}",
+        "ldr     r13, =_fiq_stack",
         // Set stack pointer (right after) and mask interrupts for System mode (Mode 0x1F)
-        msr     cpsr_c, {sys_mode}
-        ldr	r13, =_sys_stack
+        "msr     cpsr_c, {sys_mode}",
+        "ldr     r13, =_sys_stack",
         // Clear the Thumb Exception bit because all vector table is written in Arm assembly
         // even on Thumb targets.
-        mrc     p15, 0, r1, c1, c0, 0
-        bic     r1, #{te_bit}
-        mcr     p15, 0, r1, c1, c0, 0
+        "mrc     p15, 0, r1, c1, c0, 0",
+        "bic     r1, #{te_bit}",
+        "mcr     p15, 0, r1, c1, c0, 0",
         // return to caller
-        bx      r2
-    .size _stack_setup_preallocated, . - _stack_setup_preallocated
+        "bx      r2",
+        und_mode = const {
+            Cpsr::new_with_raw_value(0)
+                .with_mode(ProcessorMode::Und)
+                .with_i(true)
+                .with_f(true)
+                .raw_value()
+        },
+        svc_mode = const {
+            Cpsr::new_with_raw_value(0)
+                .with_mode(ProcessorMode::Svc)
+                .with_i(true)
+                .with_f(true)
+                .raw_value()
+        },
+        abt_mode = const {
+            Cpsr::new_with_raw_value(0)
+                .with_mode(ProcessorMode::Abt)
+                .with_i(true)
+                .with_f(true)
+                .raw_value()
+        },
+        fiq_mode = const {
+            Cpsr::new_with_raw_value(0)
+                .with_mode(ProcessorMode::Fiq)
+                .with_i(true)
+                .with_f(true)
+                .raw_value()
+        },
+        irq_mode = const {
+            Cpsr::new_with_raw_value(0)
+                .with_mode(ProcessorMode::Irq)
+                .with_i(true)
+                .with_f(true)
+                .raw_value()
+        },
+        sys_mode = const {
+            Cpsr::new_with_raw_value(0)
+                .with_mode(ProcessorMode::Sys)
+                .with_i(true)
+                .with_f(true)
+                .raw_value()
+        },
+        te_bit = const {
+            aarch32_cpu::register::Sctlr::new_with_raw_value(0)
+                .with_te(true)
+                .raw_value()
+        }
+    );
+}
 
-    // Initialises stacks, .data and .bss
-    .section .text._init_segments
-    .arm
-    .global _init_segments
-    .type _init_segments, %function
-    _init_segments:
+/// Initialises .data and .bss segments
+///
+/// * Zeroes between `addr_of!(__sbss)`` and `addr_of!(__ebss)`
+/// * Copies from `addr_of!(__sidata)` to `addr_of!(__sdata)`, up to `addr_of!(__edata)`
+#[cfg(target_arch = "arm")]
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+extern "C" fn _init_segments() {
+    core::arch::naked_asm!(
         // Initialise .bss
-        ldr     r0, =__sbss
-        ldr     r1, =__ebss
-        mov     r2, 0
-    0:
-        cmp     r1, r0
-        beq     1f
-        stm     r0!, {{r2}}
-        b       0b
-    1:
+        "ldr     r0, =__sbss",
+        "ldr     r1, =__ebss",
+        "movs    r2, 0",
+        "0:",
+        "cmp     r1, r0",
+        "beq     1f",
+        "stm     r0!, {{r2}}",
+        "b       0b",
         // Initialise .data
-        ldr     r0, =__sdata
-        ldr     r1, =__edata
-        ldr     r2, =__sidata
-    0:
-        cmp     r1, r0
-        beq     1f
-        ldm     r2!, {{r3}}
-        stm     r0!, {{r3}}
-        b       0b
-    1:
-    	// return to caller
-        bx      lr
-    .size _init_segments, . - _init_segments
-    "#,
-    und_mode = const {
-        Cpsr::new_with_raw_value(0)
-            .with_mode(ProcessorMode::Und)
-            .with_i(true)
-            .with_f(true)
-            .raw_value()
-    },
-    svc_mode = const {
-        Cpsr::new_with_raw_value(0)
-            .with_mode(ProcessorMode::Svc)
-            .with_i(true)
-            .with_f(true)
-            .raw_value()
-    },
-    abt_mode = const {
-        Cpsr::new_with_raw_value(0)
-            .with_mode(ProcessorMode::Abt)
-            .with_i(true)
-            .with_f(true)
-            .raw_value()
-    },
-    fiq_mode = const {
-        Cpsr::new_with_raw_value(0)
-            .with_mode(ProcessorMode::Fiq)
-            .with_i(true)
-            .with_f(true)
-            .raw_value()
-    },
-    irq_mode = const {
-        Cpsr::new_with_raw_value(0)
-            .with_mode(ProcessorMode::Irq)
-            .with_i(true)
-            .with_f(true)
-            .raw_value()
-    },
-    sys_mode = const {
-        Cpsr::new_with_raw_value(0)
-            .with_mode(ProcessorMode::Sys)
-            .with_i(true)
-            .with_f(true)
-            .raw_value()
-    },
-    te_bit = const {
-        aarch32_cpu::register::Sctlr::new_with_raw_value(0)
-            .with_te(true)
-            .raw_value()
-    }
-);
+        "1:",
+        "ldr     r0, =__sdata",
+        "ldr     r1, =__edata",
+        "ldr     r2, =__sidata",
+        "0:",
+        "cmp     r1, r0",
+        "beq     1f",
+        "ldm     r2!, {{r3}}",
+        "stm     r0!, {{r3}}",
+        "b       0b",
+        // return to caller
+        "1:",
+        "bx      lr",
+    );
+}
 
 // Start-up code for CPUs that boot into EL1
 //
 // Go straight to our default routine
 #[cfg(all(target_arch = "arm", not(arm_architecture = "v8-r")))]
-core::arch::global_asm!(
-    r#"
-    // Work around https://github.com/rust-lang/rust/issues/127269
-    .fpu vfp2
-
-    .section .text.default_start
-    .arm
-    .global _default_start
-    .type _default_start, %function
-    _default_start:
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+#[instruction_set(arm::a32)]
+extern "C" fn _default_start() {
+    core::arch::naked_asm!(
         // Set up stacks.
-        bl      _stack_setup_preallocated
+        "bl      {stack_setup_preallocated}",
         // Init .data and .bss
-        bl      _init_segments
-        "#,
-    fpu_enable!(),
-    r#"
+        "bl      {init_segments}",
+        fpu_enable!(),
         // Zero all registers before calling kmain
-        mov     r0, 0
-        mov     r1, 0
-        mov     r2, 0
-        mov     r3, 0
-        mov     r4, 0
-        mov     r5, 0
-        mov     r6, 0
-        mov     r7, 0
-        mov     r8, 0
-        mov     r9, 0
-        mov     r10, 0
-        mov     r11, 0
-        mov     r12, 0
+        "mov     r0, 0",
+        "mov     r1, 0",
+        "mov     r2, 0",
+        "mov     r3, 0",
+        "mov     r4, 0",
+        "mov     r5, 0",
+        "mov     r6, 0",
+        "mov     r7, 0",
+        "mov     r8, 0",
+        "mov     r9, 0",
+        "mov     r10, 0",
+        "mov     r11, 0",
+        "mov     r12, 0",
         // Jump to application
-        bl      kmain
+        "bl      kmain",
         // In case the application returns, loop forever
-        b       .
-    .size _default_start, . - _default_start
-    "#
-);
+        "b       .",
+        stack_setup_preallocated = sym _stack_setup_preallocated,
+        init_segments = sym _init_segments,
+    );
+}
 
 // Start-up code for Armv8-R.
 //
@@ -912,90 +901,85 @@ core::arch::global_asm!(
 //
 // We boot into EL2, set up a stack pointer, and run `kmain` in EL1.
 #[cfg(arm_architecture = "v8-r")]
-core::arch::global_asm!(
-    r#"
-    // Work around https://github.com/rust-lang/rust/issues/127269
-    .fpu vfp2
-
-    .section .text.default_start
-    .arm
-    .global _default_start
-    .type _default_start, %function
-    _default_start:
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+#[instruction_set(arm::a32)]
+extern "C" fn _default_start() {
+    core::arch::naked_asm!(
         // Are we in EL2? If not, skip the EL2 setup portion
-        mrs     r0, cpsr
-        and     r0, r0, 0x1F
-        cmp     r0, {cpsr_mode_hyp}
-        bne     1f
+        "mrs     r0, cpsr",
+        "and     r0, r0, 0x1F",
+        "cmp     r0, {cpsr_mode_hyp}",
+        "bne     1f",
         // Set stack pointer
-        ldr     sp, =_hyp_stack
+        "ldr     sp, =_hyp_stack",
         // Set the HVBAR (for EL2) to _vector_table
-        ldr     r1, =_vector_table
-        mcr     p15, 4, r1, c12, c0, 0
+        "ldr     r1, =_vector_table",
+        "mcr     p15, 4, r1, c12, c0, 0",
         // Configure HACTLR to let us enter EL1
-        mrc     p15, 4, r1, c1, c0, 1
-        mov     r2, {hactlr_bits}
-        orr     r1, r1, r2
-        mcr     p15, 4, r1, c1, c0, 1
+        "mrc     p15, 4, r1, c1, c0, 1",
+        "mov     r2, {hactlr_bits}",
+        "orr     r1, r1, r2",
+        "mcr     p15, 4, r1, c1, c0, 1",
         // Program the SPSR - enter system mode (0x1F) in Arm mode with IRQ, FIQ masked
-        mov		r1, {sys_mode}
-        msr		spsr_hyp, r1
-        adr		r1, 1f
-        msr		elr_hyp, r1
-        dsb
-        isb
-        eret
-    1:
+        "mov     r1, {sys_mode}",
+        "msr     spsr_hyp, r1",
+        "adr     r1, 1f",
+        "msr     elr_hyp, r1",
+        "dsb",
+        "isb",
+        "eret",
+    "1:",
         // Set up stacks.
-        bl      _stack_setup_preallocated
+        "bl      {stack_setup_preallocated}",
         // Set the VBAR (for EL1) to _vector_table. NB: This isn't required on
         // Armv7-R because that only supports 'low' (default) or 'high'.
-        ldr     r0, =_vector_table
-        mcr     p15, 0, r0, c12, c0, 0
+        "ldr     r0, =_vector_table",
+        "mcr     p15, 0, r0, c12, c0, 0",
         // Init .data and .bss
-        bl      _init_segments
-        "#,
+        "bl      {init_segments}",
+        // optionally enable the FPU
         fpu_enable!(),
-        r#"
         // Zero all registers before calling kmain
-        mov     r0, 0
-        mov     r1, 0
-        mov     r2, 0
-        mov     r3, 0
-        mov     r4, 0
-        mov     r5, 0
-        mov     r6, 0
-        mov     r7, 0
-        mov     r8, 0
-        mov     r9, 0
-        mov     r10, 0
-        mov     r11, 0
-        mov     r12, 0
+        "mov     r0, 0",
+        "mov     r1, 0",
+        "mov     r2, 0",
+        "mov     r3, 0",
+        "mov     r4, 0",
+        "mov     r5, 0",
+        "mov     r6, 0",
+        "mov     r7, 0",
+        "mov     r8, 0",
+        "mov     r9, 0",
+        "mov     r10, 0",
+        "mov     r11, 0",
+        "mov     r12, 0",
         // Jump to application
-        bl      kmain
+        "bl      kmain",
         // In case the application returns, loop forever
-        b       .
-    .size _default_start, . - _default_start
-    "#,
-    cpsr_mode_hyp = const ProcessorMode::Hyp as u8,
-    hactlr_bits = const {
-        Hactlr::new_with_raw_value(0)
-            .with_cpuactlr(true)
-            .with_cdbgdci(true)
-            .with_flashifregionr(true)
-            .with_periphpregionr(true)
-            .with_qosr(true)
-            .with_bustimeoutr(true)
-            .with_intmonr(true)
-            .with_err(true)
-            .with_testr1(true)
-            .raw_value()
-    },
-    sys_mode = const {
-        Cpsr::new_with_raw_value(0)
-            .with_mode(ProcessorMode::Sys)
-            .with_i(true)
-            .with_f(true)
-            .raw_value()
-    }
-);
+        "b       .",
+        cpsr_mode_hyp = const ProcessorMode::Hyp as u8,
+        hactlr_bits = const {
+            Hactlr::new_with_raw_value(0)
+                .with_cpuactlr(true)
+                .with_cdbgdci(true)
+                .with_flashifregionr(true)
+                .with_periphpregionr(true)
+                .with_qosr(true)
+                .with_bustimeoutr(true)
+                .with_intmonr(true)
+                .with_err(true)
+                .with_testr1(true)
+                .raw_value()
+        },
+        sys_mode = const {
+            Cpsr::new_with_raw_value(0)
+                .with_mode(ProcessorMode::Sys)
+                .with_i(true)
+                .with_f(true)
+                .raw_value()
+        },
+        stack_setup_preallocated = sym _stack_setup_preallocated,
+        init_segments = sym _init_segments,
+    );
+}
