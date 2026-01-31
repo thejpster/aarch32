@@ -13,9 +13,11 @@
 use core::cell::{RefCell, UnsafeCell};
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
+use aarch32_cpu::register::{cpsr::ProcessorMode, Cpsr, Hactlr, Sctlr};
 use aarch32_rt::entry;
-use mps3_an536 as _;
 use semihosting::println;
+
+use mps3_an536 as _;
 
 #[repr(align(16))]
 struct Stack<const LEN_BYTES: usize> {
@@ -209,9 +211,9 @@ core::arch::global_asm!(
         mcr     p15, 0, r0, c12, c0, 0
         ldr     r0, =_core1_stack_pointer
         ldr     r0, [r0]
-        // set up our stacks using that stack pointer
+        // set up our stacks using that stack pointer - also switches to SYS mode
         bl      _stack_setup
-        // Zero all registers before calling kmain
+        // Zero all registers before calling kmain2
         mov     r0, 0
         mov     r1, 0
         mov     r2, 0
@@ -230,7 +232,7 @@ core::arch::global_asm!(
     .size _start, . - _start
     "#,
     hactlr_bits = const {
-        aarch32_cpu::register::Hactlr::new_with_raw_value(0)
+        Hactlr::new_with_raw_value(0)
             .with_cpuactlr(true)
             .with_cdbgdci(true)
             .with_flashifregionr(true)
@@ -243,10 +245,109 @@ core::arch::global_asm!(
             .raw_value()
     },
     sys_mode = const {
-        aarch32_cpu::register::Cpsr::new_with_raw_value(0)
-            .with_mode(aarch32_cpu::register::cpsr::ProcessorMode::Sys)
+        Cpsr::new_with_raw_value(0)
+            .with_mode(ProcessorMode::Sys)
             .with_i(true)
             .with_f(true)
             .raw_value()
     }
+);
+
+// Initialise the stack for each mode
+#[cfg(target_arch = "arm")]
+core::arch::global_asm!(
+    r#"
+    // Work around https://github.com/rust-lang/rust/issues/127269
+    .fpu vfp2
+
+    // Configure a stack for every mode. Leaves you in sys mode.
+    //
+    // Pass in stack top in r0.
+    .section .text._stack_setup
+    .global _stack_setup
+    .type _stack_setup, %function
+    _stack_setup:
+        // Save LR from whatever mode we're currently in
+        mov     r2, lr
+        // (we might not be in the same mode when we return).
+        // Set stack pointer (right after) and mask interrupts for for UND mode (Mode 0x1B)
+        msr     cpsr_c, {und_mode}
+        mov     sp, r0
+        ldr     r1, =_und_stack_size
+        sub     r0, r0, r1
+        // Set stack pointer (right after) and mask interrupts for for SVC mode (Mode 0x13)
+        msr     cpsr_c, {svc_mode}
+        mov     sp, r0
+        ldr     r1, =_svc_stack_size
+        sub     r0, r0, r1
+        // Set stack pointer (right after) and mask interrupts for for ABT mode (Mode 0x17)
+        msr     cpsr_c, {abt_mode}
+        mov     sp, r0
+        ldr     r1, =_abt_stack_size
+        sub     r0, r0, r1
+        // Set stack pointer (right after) and mask interrupts for for IRQ mode (Mode 0x12)
+        msr     cpsr_c, {irq_mode}
+        mov     sp, r0
+        ldr     r1, =_irq_stack_size
+        sub     r0, r0, r1
+        // Set stack pointer (right after) and mask interrupts for for FIQ mode (Mode 0x11)
+        msr     cpsr_c, {fiq_mode}
+        mov     sp, r0
+        ldr     r1, =_fiq_stack_size
+        sub     r0, r0, r1
+        // Set stack pointer (right after) and mask interrupts for for System mode (Mode 0x1F)
+        msr     cpsr_c, {sys_mode}
+        mov     sp, r0
+        // Clear the Thumb Exception bit because all our targets are currently
+        // for Arm (A32) mode
+        mrc     p15, 0, r1, c1, c0, 0
+        bic     r1, #{te_bit}
+        mcr     p15, 0, r1, c1, c0, 0
+        // return to caller
+        bx      r2
+    .size _stack_setup, . - _stack_setup
+    "#,
+    und_mode = const {
+        Cpsr::new_with_raw_value(0)
+            .with_mode(ProcessorMode::Und)
+            .with_i(true)
+            .with_f(true)
+            .raw_value()
+    },
+    svc_mode = const {
+        Cpsr::new_with_raw_value(0)
+            .with_mode(ProcessorMode::Svc)
+            .with_i(true)
+            .with_f(true)
+            .raw_value()
+    },
+    abt_mode = const {
+        Cpsr::new_with_raw_value(0)
+            .with_mode(ProcessorMode::Abt)
+            .with_i(true)
+            .with_f(true)
+            .raw_value()
+    },
+    fiq_mode = const {
+        Cpsr::new_with_raw_value(0)
+            .with_mode(ProcessorMode::Fiq)
+            .with_i(true)
+            .with_f(true)
+            .raw_value()
+    },
+    irq_mode = const {
+        Cpsr::new_with_raw_value(0)
+            .with_mode(ProcessorMode::Irq)
+            .with_i(true)
+            .with_f(true)
+            .raw_value()
+    },
+    sys_mode = const {
+        Cpsr::new_with_raw_value(0)
+            .with_mode(ProcessorMode::Sys)
+            .with_i(true)
+            .with_f(true)
+            .raw_value()
+    },
+    te_bit = const { Sctlr::new_with_raw_value(0).with_te(true).raw_value() }
 );
