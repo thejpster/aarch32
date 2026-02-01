@@ -33,66 +33,60 @@ fn main() -> ! {
 //
 // Unlike the default routine, it does not initialise any other stacks, or
 // switch to EL1 mode.
-core::arch::global_asm!(
-    r#"
-    // Work around https://github.com/rust-lang/rust/issues/127269
-    .fpu vfp3-d16
-
-    .section .text.start
-
-    .global _start
-    .type _start, %function
-    _start:
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+#[instruction_set(arm::t32)]
+pub unsafe extern "C" fn _start() {
+    core::arch::naked_asm!(
         // Set stack pointer
-        ldr     sp, =_hyp_stack
+        "ldr     sp, =_hyp_stack",
         // Set the HVBAR (for EL2) to _vector_table
-        ldr     r1, =_vector_table
-        mcr     p15, 4, r1, c12, c0, 0
+        "ldr     r1, =_vector_table",
+        "mcr     p15, 4, r1, c12, c0, 0",
         // Configure HACTLR to let us enter EL1
-        mrc     p15, 4, r1, c1, c0, 1
-        mov     r2, {hactlr_bits}
-        orr     r1, r1, r2
-        mcr     p15, 4, r1, c1, c0, 1
+        "mrc     p15, 4, r1, c1, c0, 1",
+        "mov     r2, {hactlr_bits}",
+        "orr     r1, r1, r2",
+        "mcr     p15, 4, r1, c1, c0, 1",
         // Init .data and .bss
-        bl      _init_segments
+        "bl      _init_segments",
         // Allow VFP coprocessor access
-        mrc     p15, 0, r0, c1, c0, 2
-        orr     r0, r0, #0xF00000
-        mcr     p15, 0, r0, c1, c0, 2
+        "mrc     p15, 0, r0, c1, c0, 2",
+        "orr     r0, r0, #0xF00000",
+        "mcr     p15, 0, r0, c1, c0, 2",
         // Enable VFP
-        mov     r0, #0x40000000
-        vmsr    fpexc, r0
+        "mov     r0, #0x40000000",
+        "vmsr    fpexc, r0",
         // Zero all registers before calling kmain
-        mov     r0, 0
-        mov     r1, 0
-        mov     r2, 0
-        mov     r3, 0
-        mov     r4, 0
-        mov     r5, 0
-        mov     r6, 0
-        mov     r7, 0
-        mov     r8, 0
-        mov     r9, 0
-        mov     r10, 0
-        mov     r11, 0
-        mov     r12, 0
+        "mov     r0, 0",
+        "mov     r1, 0",
+        "mov     r2, 0",
+        "mov     r3, 0",
+        "mov     r4, 0",
+        "mov     r5, 0",
+        "mov     r6, 0",
+        "mov     r7, 0",
+        "mov     r8, 0",
+        "mov     r9, 0",
+        "mov     r10, 0",
+        "mov     r11, 0",
+        "mov     r12, 0",
         // Jump to application
-        bl      kmain
+        "bl      kmain",
         // In case the application returns, loop forever
-        b       .
-    .size _start, . - _start
-    "#,
-    hactlr_bits = const {
-        Hactlr::new_with_raw_value(0)
-            .with_cpuactlr(true)
-            .with_cdbgdci(true)
-            .with_flashifregionr(true)
-            .with_periphpregionr(true)
-            .with_qosr(true)
-            .with_bustimeoutr(true)
-            .with_intmonr(true)
-            .with_err(true)
-            .with_testr1(true)
-            .raw_value()
-    },
-);
+        "b       .",
+        hactlr_bits = const {
+            Hactlr::new_with_raw_value(0)
+                .with_cpuactlr(true)
+                .with_cdbgdci(true)
+                .with_flashifregionr(true)
+                .with_periphpregionr(true)
+                .with_qosr(true)
+                .with_bustimeoutr(true)
+                .with_intmonr(true)
+                .with_err(true)
+                .with_testr1(true)
+                .raw_value()
+        },
+    );
+}

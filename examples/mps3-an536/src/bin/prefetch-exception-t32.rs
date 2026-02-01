@@ -21,33 +21,21 @@ fn main() -> ! {
 
     // A BKPT instruction triggers a Prefetch Abort except when Halting debug-mode is enabled.
     // See p. 2038 of ARMv7-M Architecture Reference Manual
-    unsafe {
-        // trigger an prefetch abort exception, from T32 (Thumb) mode
-        bkpt_from_t32();
-    }
+
+    // trigger an prefetch abort exception, from T32 (Thumb) mode
+    bkpt_from_t32();
 
     println!("Recovered from fault OK!");
 
     semihosting::process::exit(0);
 }
 
-// These functions are written in assembly
-extern "C" {
-    fn bkpt_from_t32();
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+#[instruction_set(arm::t32)]
+extern "C" fn bkpt_from_t32() {
+    core::arch::naked_asm!("bkpt    #0", "bx      lr",);
 }
-
-core::arch::global_asm!(
-    r#"
-    // fn bkpt_from_t32();
-    .thumb
-    .global bkpt_from_t32
-    .type bkpt_from_t32, %function
-    bkpt_from_t32:
-        bkpt    #0
-        bx      lr
-    .size bkpt_from_t32, . - bkpt_from_t32
-"#
-);
 
 #[exception(Undefined)]
 fn undefined_handler(_addr: usize) -> ! {
@@ -63,15 +51,17 @@ unsafe fn prefetch_abort_handler(addr: usize) -> usize {
     let ifar = Ifar::read();
     println!("IFAR (Faulting Address Register): {:?}", ifar);
 
-    if (addr + 1) == bkpt_from_t32 as unsafe extern "C" fn() as usize {
+    let expect_fault_at = (bkpt_from_t32 as extern "C" fn() as usize) - 1;
+
+    if addr == expect_fault_at {
         // note that thumb functions have their LSB set, despite always being a
         // multiple of two - that's how the CPU knows they are written in T32
         // machine code.
         println!("caught bkpt_from_t32");
     } else {
-        println!(
+        panic!(
             "Bad fault address {:08x} is not {:08x}",
-            addr, bkpt_from_t32 as unsafe extern "C" fn() as usize
+            addr, expect_fault_at
         );
     }
 
