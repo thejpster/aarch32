@@ -6,13 +6,13 @@ core::arch::global_asm!(
     // Work around https://github.com/rust-lang/rust/issues/127269
     .fpu vfp2
 
-    .section .text._asm_default_svc_handler
 
     // Called from the vector table when we have an software interrupt.
     // Saves state and calls a C-compatible handler like
     // `extern "C" fn _svc_handler(svc: u32);`
-    .global _asm_default_svc_handler
+    .section .text._asm_default_svc_handler
     .arm
+    .global _asm_default_svc_handler
     .type _asm_default_svc_handler, %function
     _asm_default_svc_handler:
         stmfd   sp!, {{ r0, lr }}
