@@ -454,8 +454,6 @@
 //! * `_asm_default_fiq_handler` - an FIQ handler that just spins
 //! * `_default_handler` - a C compatible function that spins forever.
 //! * `_init_segments` - initialises `.bss` and `.data`
-//! * `_stack_setup` - initialises UND, SVC, ABT, IRQ, FIQ and SYS stacks from
-//!   the address given in `r0`. Deprecated, use `_stack_setup_preallocated` instead
 //! * `_stack_setup_preallocated` - initialises UND, SVC, ABT, IRQ, FIQ and SYS
 //!   stacks from the `.stacks` section defined in link.x, based on
 //!   _xxx_stack_size values
@@ -523,7 +521,10 @@ pub extern "C" fn _default_handler() {
 }
 
 // The Interrupt Vector Table, and some default assembly-language handler.
+//
 // Needs to be aligned to 5bits/2^5 to be stored correctly in VBAR
+//
+// Need to be assembled as Arm-mode because the Thumb Exception bit is cleared
 #[cfg(target_arch = "arm")]
 core::arch::global_asm!(
     r#"
@@ -757,112 +758,6 @@ macro_rules! fpu_enable {
 }
 
 // Start-up code for Armv7-R (and Armv8-R once we've left EL2)
-// DEPRECATED: use _stack_setup_preallocated to use sections defined
-// in linker script
-// We set up our stacks and `kmain` in system mode.
-#[cfg(target_arch = "arm")]
-core::arch::global_asm!(
-    r#"
-    // Work around https://github.com/rust-lang/rust/issues/127269
-    .fpu vfp2
-
-    // Configure a stack for every mode. Leaves you in sys mode.
-    //
-    // Pass in stack top in r0.
-    .section .text._stack_setup
-    .global _stack_setup
-    .type _stack_setup, %function
-    _stack_setup:
-        // Save LR from whatever mode we're currently in
-        mov     r2, lr
-        // (we might not be in the same mode when we return).
-        // Set stack pointer (right after) and mask interrupts for for UND mode (Mode 0x1B)
-        msr     cpsr_c, {und_mode}
-        mov     sp, r0
-        ldr     r1, =_und_stack_size
-        sub     r0, r0, r1
-        // Set stack pointer (right after) and mask interrupts for for SVC mode (Mode 0x13)
-        msr     cpsr_c, {svc_mode}
-        mov     sp, r0
-        ldr     r1, =_svc_stack_size
-        sub     r0, r0, r1
-        // Set stack pointer (right after) and mask interrupts for for ABT mode (Mode 0x17)
-        msr     cpsr_c, {abt_mode}
-        mov     sp, r0
-        ldr     r1, =_abt_stack_size
-        sub     r0, r0, r1
-        // Set stack pointer (right after) and mask interrupts for for IRQ mode (Mode 0x12)
-        msr     cpsr_c, {irq_mode}
-        mov     sp, r0
-        ldr     r1, =_irq_stack_size
-        sub     r0, r0, r1
-        // Set stack pointer (right after) and mask interrupts for for FIQ mode (Mode 0x11)
-        msr     cpsr_c, {fiq_mode}
-        mov     sp, r0
-        ldr     r1, =_fiq_stack_size
-        sub     r0, r0, r1
-        // Set stack pointer (right after) and mask interrupts for for System mode (Mode 0x1F)
-        msr     cpsr_c, {sys_mode}
-        mov     sp, r0
-        // Clear the Thumb Exception bit because all our targets are currently
-        // for Arm (A32) mode
-        mrc     p15, 0, r1, c1, c0, 0
-        bic     r1, #{te_bit}
-        mcr     p15, 0, r1, c1, c0, 0
-        // return to caller
-        bx      r2
-    .size _stack_setup, . - _stack_setup
-    "#,
-    und_mode = const {
-        Cpsr::new_with_raw_value(0)
-            .with_mode(ProcessorMode::Und)
-            .with_i(true)
-            .with_f(true)
-            .raw_value()
-    },
-    svc_mode = const {
-        Cpsr::new_with_raw_value(0)
-            .with_mode(ProcessorMode::Svc)
-            .with_i(true)
-            .with_f(true)
-            .raw_value()
-    },
-    abt_mode = const {
-        Cpsr::new_with_raw_value(0)
-            .with_mode(ProcessorMode::Abt)
-            .with_i(true)
-            .with_f(true)
-            .raw_value()
-    },
-    fiq_mode = const {
-        Cpsr::new_with_raw_value(0)
-            .with_mode(ProcessorMode::Fiq)
-            .with_i(true)
-            .with_f(true)
-            .raw_value()
-    },
-    irq_mode = const {
-        Cpsr::new_with_raw_value(0)
-            .with_mode(ProcessorMode::Irq)
-            .with_i(true)
-            .with_f(true)
-            .raw_value()
-    },
-    sys_mode = const {
-        Cpsr::new_with_raw_value(0)
-            .with_mode(ProcessorMode::Sys)
-            .with_i(true)
-            .with_f(true)
-            .raw_value()
-    },
-    te_bit = const {
-        aarch32_cpu::register::Sctlr::new_with_raw_value(0)
-            .with_te(true)
-            .raw_value()
-    }
-);
-
-// Start-up code for Armv7-R (and Armv8-R once we've left EL2)
 // Stack location and sizes are taken from sections defined in linker script
 // We set up our stacks and `kmain` in system mode.
 #[cfg(target_arch = "arm")]
@@ -898,8 +793,8 @@ core::arch::global_asm!(
         // Set stack pointer (right after) and mask interrupts for System mode (Mode 0x1F)
         msr     cpsr_c, {sys_mode}
         ldr	r13, =_sys_stack
-        // Clear the Thumb Exception bit because all our targets are currently
-        // for Arm (A32) mode
+        // Clear the Thumb Exception bit because all vector table is written in Arm assembly
+        // even on Thumb targets.
         mrc     p15, 0, r1, c1, c0, 0
         bic     r1, #{te_bit}
         mcr     p15, 0, r1, c1, c0, 0
