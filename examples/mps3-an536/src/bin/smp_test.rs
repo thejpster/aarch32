@@ -264,6 +264,7 @@ core::arch::global_asm!(
     //
     // Pass in stack top in r0.
     .section .text._stack_setup
+    .arm
     .global _stack_setup
     .type _stack_setup, %function
     _stack_setup:

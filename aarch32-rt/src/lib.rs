@@ -804,8 +804,8 @@ core::arch::global_asm!(
 
     // Initialises stacks, .data and .bss
     .section .text._init_segments
-    .global _init_segments
     .arm
+    .global _init_segments
     .type _init_segments, %function
     _init_segments:
         // Initialise .bss
