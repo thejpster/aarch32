@@ -10,6 +10,9 @@ As of *aarch32-rt-macros v0.1.0*, this project is released in lock-step with
 
 ## [Unreleased]
 
+- Handle outer `unsafe` for whitelisted proc macro attributes. For example, this allows
+  `#[unsafe(link_section="...")]` which previously did not work.
+
 ## [aarch32-rt-macros v0.2.0]
 
 - Changed `#[entry]`, `#[exception]` and `#[irq]` to hide the handler function
