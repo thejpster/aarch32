@@ -455,6 +455,21 @@ fn check_attr_whitelist(attrs: &[Attribute], caller: VectorKind) -> Result<(), T
     ];
 
     'o: for attr in attrs {
+        // Also check whatever is wrapped inside `unsafe(...)`
+        if attr.path().is_ident("unsafe") {
+            let mut whitelisted = false;
+            let _ = attr.parse_nested_meta(|meta| {
+                for val in whitelist {
+                    if meta.path.is_ident(val) {
+                        whitelisted = true;
+                    }
+                }
+                Ok(())
+            });
+            if whitelisted {
+                continue 'o;
+            }
+        }
         for val in whitelist {
             if eq(attr, val) {
                 continue 'o;
