@@ -94,7 +94,10 @@ fn catchall_handler() {
 }
 
 /// Our IRQ handler asks the PL190 what to do, and does it.
+///
+/// The `link_section` is just to check the macro can cope with it
 #[exception(Irq)]
+#[unsafe(link_section = ".text.some_other_section")]
 unsafe fn interrupt_handler() {
     println!("> interrupt_handler()");
     PL190.irq_process();
