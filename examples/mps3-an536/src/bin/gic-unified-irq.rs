@@ -92,7 +92,9 @@ fn dump_cpsr() {
     println!("CPSR: {:?}", cpsr);
 }
 
+// The `link_section` is just to check the macro can cope with it
 #[irq]
+#[unsafe(link_section = ".text.some_other_section")]
 fn irq_handler() {
     println!("> IRQ");
     while let Some(int_id) = GicCpuInterface::get_and_acknowledge_interrupt(InterruptGroup::Group1)

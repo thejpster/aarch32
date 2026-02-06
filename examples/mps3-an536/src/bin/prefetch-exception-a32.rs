@@ -51,7 +51,6 @@ core::arch::global_asm!(
 
 // Custom link sections are allowed as well.
 #[exception(Undefined)]
-#[unsafe(link_section = ".text._rust_undefined_handler")]
 fn undefined_handler(_addr: usize) -> ! {
     panic!("unexpected undefined exception");
 }
