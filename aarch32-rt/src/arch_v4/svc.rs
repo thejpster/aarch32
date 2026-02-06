@@ -46,8 +46,8 @@ core::arch::global_asm!(
         mov     r0, lr                    // replace R0 with return value from _svc_handler
         add     sp, r12                   // restore SP alignment using R12
         pop     {{ lr }}                  // restore SPSR using LR
-        msr     spsr_cxsf, lr             //
-        ldmfd   sp!, {{ r12, pc }}^       // restore R12 and return from exception
+        msr     spsr, lr                  //
+        ldmfd   sp!, {{ r12, pc }}^       // restore R12 and return from exception (^ => restore SPSR to CPSR)
     .size _asm_default_svc_handler, . - _asm_default_svc_handler
     "#,
     t_bit = const { crate::Cpsr::new_with_raw_value(0).with_t(true).raw_value() },
