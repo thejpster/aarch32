@@ -35,9 +35,9 @@ core::arch::global_asm!(
         pop     {{ r0-r3, r12, lr }}      // restore alignment amount (in LR) and preserved registers
         add     sp, lr                    // restore SP alignment using LR
         msr     cpsr_c, {irq_mode}        // switch back to IRQ mode (with IRQ masked)
-        ldmia   sp!, {{ lr }}             // load and restore SPSR using LR
+        pop     {{ lr }}                  // load and restore SPSR using LR
         msr     spsr, lr                  //
-        ldmfd   sp!, {{ pc }}^            // return from exception
+        ldmfd   sp!, {{ pc }}^            // return from exception (^ => restore SPSR to CPSR)
     .size _asm_default_irq_handler, . - _asm_default_irq_handler
     "#,
     // sys mode with IRQ masked

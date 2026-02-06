@@ -34,7 +34,7 @@ core::arch::global_asm!(
         pop     {{ r0-r4, r12 }}          // restore preserved registers, dummy value, and alignment amount
         add     sp, r12                   // restore SP alignment using R12
         pop     {{ r12 }}                 // restore SPSR using R12
-        msr     spsr_cxsf, r12            //
+        msr     spsr, r12                 //
         pop     {{ r12 }}                 // restore R12
         movs    pc, lr                    // return from exception
     .size _asm_default_data_abort_handler, . - _asm_default_data_abort_handler
@@ -75,7 +75,7 @@ core::arch::global_asm!(
         pop     {{ r0-r4, r12 }}          // restore preserved registers, dummy value, and alignment amount
         add     sp, r12                   // restore SP alignment using R12
         pop     {{ r12 }}                 // restore SPSR using R12
-        msr     spsr_cxsf, r12            //
+        msr     spsr, r12                 //
         pop     {{ r12 }}                 // restore R12
         movs    pc, lr                    // return from exception
     .size _asm_default_prefetch_abort_handler, . - _asm_default_prefetch_abort_handler
