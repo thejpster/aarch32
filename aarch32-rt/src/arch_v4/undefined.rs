@@ -39,9 +39,9 @@ core::arch::global_asm!(
         pop     {{ r0-r4, r12 }}          // restore preserved registers, dummy value, and alignment amount
         add     sp, r12                   // restore SP alignment using R12
         pop     {{ r12 }}                 // restore SPSR using R12
-        msr     spsr_cxsf, r12            //
+        msr     spsr, r12                 //
         pop     {{ r12 }}                 // restore R12
-        movs    pc, lr                    // return from exception
+        movs    pc, lr                    // return from exception (movs => restore SPSR to CPSR)
     .size _asm_default_undefined_handler, . - _asm_default_undefined_handler
     "#,
     t_bit = const { crate::Cpsr::new_with_raw_value(0).with_t(true).raw_value() },
