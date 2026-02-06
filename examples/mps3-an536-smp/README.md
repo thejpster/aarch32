@@ -1,7 +1,7 @@
-# Examples for Arm MPS3-AN536
+# SMP Examples for Arm MPS3-AN536
 
 This package contains example binaries for the Arm MPS3-AN536 evaluation system,
-featuring one Arm Cortex-R52 processor cores. This crate should be compiled for
+featuring two Arm Cortex-R52 processor cores. This crate should be compiled for
 the `armv8r-none-eabihf` or `thumbv8r-none-eabihf` target. The repo-level
 [`.cargo/config.toml`] will ensure the code runs on the appropriate QEMU
 configuration.

@@ -150,7 +150,7 @@ clippy-host:
 	cd arm-targets && cargo clippy {{verbose}}
 
 # Run all the tests
-test: test-cargo test-qemu test-smp
+test: test-cargo test-qemu
 
 # Run the unit tests with cargo
 test-cargo:
@@ -182,13 +182,10 @@ test-qemu:
 	RUSTFLAGS=-Ctarget-feature=+d32 ./tests.sh examples/versatileab thumbv7a-none-eabihf -Zbuild-std=core --features=fpu-d32 --target-dir=target-d32 {{verbose}} || FAIL=1
 	./tests.sh examples/mps3-an536 armv8r-none-eabihf {{verbose}} || FAIL=1
 	./tests.sh examples/mps3-an536 thumbv8r-none-eabihf -Zbuild-std=core {{verbose}} || FAIL=1
+	./tests.sh examples/mps3-an536-smp armv8r-none-eabihf {{verbose}} || FAIL=1
+	./tests.sh examples/mps3-an536-smp thumbv8r-none-eabihf -Zbuild-std=core {{verbose}} || FAIL=1
 	RUSTFLAGS=-Ctarget-cpu=cortex-r52 ./tests.sh examples/mps3-an536 armv8r-none-eabihf --features=fpu-d32 --target-dir=target-d32 {{verbose}} || FAIL=1
 	RUSTFLAGS=-Ctarget-cpu=cortex-r52 ./tests.sh examples/mps3-an536 thumbv8r-none-eabihf -Zbuild-std=core --features=fpu-d32 --target-dir=target-d32 {{verbose}} || FAIL=1
+	RUSTFLAGS=-Ctarget-cpu=cortex-r52 ./tests.sh examples/mps3-an536-smp armv8r-none-eabihf --features=fpu-d32 --target-dir=target-d32 {{verbose}} || FAIL=1
+	RUSTFLAGS=-Ctarget-cpu=cortex-r52 ./tests.sh examples/mps3-an536-smp thumbv8r-none-eabihf -Zbuild-std=core --features=fpu-d32 --target-dir=target-d32 {{verbose}} || FAIL=1
 	if [ "${FAIL}" == "1" ]; then exit 1; fi
-
-# Run the special SMP test
-#
-# You can't run the normal examples with two CPUs because nothing stops the second CPU from running :/. So we have
-# a special test for SMP mode on the MPS3-AN536
-test-smp:
-	cd examples/mps3-an536 && cargo run --target=armv8r-none-eabihf --bin smp_test {{verbose}} -- --smp 2
