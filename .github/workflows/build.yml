@@ -260,7 +260,7 @@ jobs:
       - run: /bin/true
 
   # Run the unit tests
-  unit-test:
+  unit-test-all:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -274,9 +274,9 @@ jobs:
       - run: |
           just test-cargo
 
-  # Run some programs in QEMU 9
+  # Run some programs in QEMU 9 for Armv4T
   # These tests build with nightly as pinned by the rust-toolchain.toml file, because they include Tier 3 targets
-  qemu-test:
+  test-qemu-v4t:
     runs-on: ubuntu-24.04
     needs: [build-all]
     steps:
@@ -294,11 +294,129 @@ jobs:
       - name: Run tests in QEMU
         run: |
           export PATH=/opt/qemu/bin:$PATH
-          just test-qemu
+          just test-qemu-v4t
+
+  # Run some programs in QEMU 9 for Armv4T
+  # These tests build with nightly as pinned by the rust-toolchain.toml file, because they include Tier 3 targets
+  test-qemu-v5te:
+    runs-on: ubuntu-24.04
+    needs: [build-all]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Just
+        uses: taiki-e/install-action@just
+      - name: Install Dependencies
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install libpixman-1-0 libfdt1 libglib2.0-0t64
+      - name: Install custom QEMU into /opt
+        run: |
+          curl -sSL https://github.com/jonathanpallant/qemu9-for-ubuntu-2404/releases/download/qemu-9.2.3%2Bbuild0/qemu-9.2.3-ubuntu-24.04.tar.gz | sudo tar xvzf - -C /
+      - name: Run tests in QEMU
+        run: |
+          export PATH=/opt/qemu/bin:$PATH
+          just test-qemu-v5te
+
+  # Run some programs in QEMU 9 for Armv6
+  # These tests build with nightly as pinned by the rust-toolchain.toml file, because they include Tier 3 targets
+  test-qemu-v6:
+    runs-on: ubuntu-24.04
+    needs: [build-all]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Just
+        uses: taiki-e/install-action@just
+      - name: Install Dependencies
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install libpixman-1-0 libfdt1 libglib2.0-0t64
+      - name: Install custom QEMU into /opt
+        run: |
+          curl -sSL https://github.com/jonathanpallant/qemu9-for-ubuntu-2404/releases/download/qemu-9.2.3%2Bbuild0/qemu-9.2.3-ubuntu-24.04.tar.gz | sudo tar xvzf - -C /
+      - name: Run tests in QEMU
+        run: |
+          export PATH=/opt/qemu/bin:$PATH
+          just test-qemu-v6
+
+  # Run some programs in QEMU 9 for Armv7-A
+  # These tests build with nightly as pinned by the rust-toolchain.toml file, because they include Tier 3 targets
+  test-qemu-v7a:
+    runs-on: ubuntu-24.04
+    needs: [build-all]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Just
+        uses: taiki-e/install-action@just
+      - name: Install Dependencies
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install libpixman-1-0 libfdt1 libglib2.0-0t64
+      - name: Install custom QEMU into /opt
+        run: |
+          curl -sSL https://github.com/jonathanpallant/qemu9-for-ubuntu-2404/releases/download/qemu-9.2.3%2Bbuild0/qemu-9.2.3-ubuntu-24.04.tar.gz | sudo tar xvzf - -C /
+      - name: Run tests in QEMU
+        run: |
+          export PATH=/opt/qemu/bin:$PATH
+          just test-qemu-v7a
+
+
+  # Run some programs in QEMU 9 for Armv7-R
+  # These tests build with nightly as pinned by the rust-toolchain.toml file, because they include Tier 3 targets
+  test-qemu-v7r:
+    runs-on: ubuntu-24.04
+    needs: [build-all]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Just
+        uses: taiki-e/install-action@just
+      - name: Install Dependencies
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install libpixman-1-0 libfdt1 libglib2.0-0t64
+      - name: Install custom QEMU into /opt
+        run: |
+          curl -sSL https://github.com/jonathanpallant/qemu9-for-ubuntu-2404/releases/download/qemu-9.2.3%2Bbuild0/qemu-9.2.3-ubuntu-24.04.tar.gz | sudo tar xvzf - -C /
+      - name: Run tests in QEMU
+        run: |
+          export PATH=/opt/qemu/bin:$PATH
+          just test-qemu-v7r
+  
+  # Run some programs in QEMU 9 for Armv8-R
+  # These tests build with nightly as pinned by the rust-toolchain.toml file, because they include Tier 3 targets
+  test-qemu-v8r:
+    runs-on: ubuntu-24.04
+    needs: [build-all]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Just
+        uses: taiki-e/install-action@just
+      - name: Install Dependencies
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install libpixman-1-0 libfdt1 libglib2.0-0t64
+      - name: Install custom QEMU into /opt
+        run: |
+          curl -sSL https://github.com/jonathanpallant/qemu9-for-ubuntu-2404/releases/download/qemu-9.2.3%2Bbuild0/qemu-9.2.3-ubuntu-24.04.tar.gz | sudo tar xvzf - -C /
+      - name: Run tests in QEMU
+        run: |
+          export PATH=/opt/qemu/bin:$PATH
+          just test-qemu-v8r
+
+  # Gather all the above QEMU jobs together for the purposes of getting an overall pass-fail
+  test-qemu-all:
+    runs-on: ubuntu-24.04
+    needs: [test-qemu-v4t, test-qemu-v5te, test-qemu-v6, test-qemu-v7a, test-qemu-v7r, test-qemu-v8r]
+    steps:
+      - run: /bin/true
 
   # Gather all the above xxx-all jobs together for the purposes of getting an overall pass-fail
   all:
     runs-on: ubuntu-24.04
-    needs: [docs-all, build-all, fmt-all, unit-test, qemu-test] # not gating on clippy-all
+    needs: [docs-all, build-all, fmt-all, unit-test-all, test-qemu-all] # not gating on clippy-all
     steps:
       - run: /bin/true

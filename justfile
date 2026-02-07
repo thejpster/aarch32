@@ -160,26 +160,54 @@ test-cargo:
 	cd arm-targets && cargo test {{verbose}}
 
 # Run the integration tests in QEMU
-test-qemu:
+test-qemu: test-qemu-v4t test-qemu-v5te test-qemu-v6 test-qemu-v7a test-qemu-v7r test-qemu-v8r
+
+test-qemu-v4t:
 	#!/bin/bash
 	FAIL=0
 	./tests.sh examples/versatileab armv4t-none-eabi -Zbuild-std=core {{verbose}} || FAIL=1
 	./tests.sh examples/versatileab thumbv4t-none-eabi -Zbuild-std=core {{verbose}} || FAIL=1
+	if [ "${FAIL}" == "1" ]; then exit 1; fi
+
+test-qemu-v5te:
+	#!/bin/bash
+	FAIL=0
 	./tests.sh examples/versatileab armv5te-none-eabi -Zbuild-std=core {{verbose}} || FAIL=1
 	./tests.sh examples/versatileab thumbv5te-none-eabi -Zbuild-std=core {{verbose}} || FAIL=1
+	if [ "${FAIL}" == "1" ]; then exit 1; fi
+
+test-qemu-v6:
+	#!/bin/bash
+	FAIL=0
 	./tests.sh examples/versatileab armv6-none-eabi -Zbuild-std=core {{verbose}} || FAIL=1
 	./tests.sh examples/versatileab armv6-none-eabihf -Zbuild-std=core {{verbose}} || FAIL=1
+	# Waiting on compiler-builtins to be updated
 	# ./tests.sh examples/versatileab thumbv6-none-eabi -Zbuild-std=core {{verbose}} || FAIL=1
-	./tests.sh examples/versatileab armv7r-none-eabi {{verbose}} || FAIL=1
-	./tests.sh examples/versatileab thumbv7r-none-eabi -Zbuild-std=core {{verbose}} || FAIL=1
-	./tests.sh examples/versatileab armv7r-none-eabihf {{verbose}} || FAIL=1
-	./tests.sh examples/versatileab thumbv7r-none-eabihf -Zbuild-std=core {{verbose}} || FAIL=1
+	if [ "${FAIL}" == "1" ]; then exit 1; fi
+
+test-qemu-v7a:
+	#!/bin/bash
+	FAIL=0
 	./tests.sh examples/versatileab armv7a-none-eabi {{verbose}} || FAIL=1
 	./tests.sh examples/versatileab thumbv7a-none-eabi -Zbuild-std=core {{verbose}} || FAIL=1
 	./tests.sh examples/versatileab armv7a-none-eabihf {{verbose}} || FAIL=1
 	./tests.sh examples/versatileab thumbv7a-none-eabihf -Zbuild-std=core {{verbose}} || FAIL=1
 	RUSTFLAGS=-Ctarget-feature=+d32 ./tests.sh examples/versatileab armv7a-none-eabihf --features=fpu-d32 --target-dir=target-d32 {{verbose}} || FAIL=1
 	RUSTFLAGS=-Ctarget-feature=+d32 ./tests.sh examples/versatileab thumbv7a-none-eabihf -Zbuild-std=core --features=fpu-d32 --target-dir=target-d32 {{verbose}} || FAIL=1
+	if [ "${FAIL}" == "1" ]; then exit 1; fi
+
+test-qemu-v7r:
+	#!/bin/bash
+	FAIL=0
+	./tests.sh examples/versatileab armv7r-none-eabi {{verbose}} || FAIL=1
+	./tests.sh examples/versatileab thumbv7r-none-eabi -Zbuild-std=core {{verbose}} || FAIL=1
+	./tests.sh examples/versatileab armv7r-none-eabihf {{verbose}} || FAIL=1
+	./tests.sh examples/versatileab thumbv7r-none-eabihf -Zbuild-std=core {{verbose}} || FAIL=1
+	if [ "${FAIL}" == "1" ]; then exit 1; fi
+
+test-qemu-v8r:
+	#!/bin/bash
+	FAIL=0
 	./tests.sh examples/mps3-an536 armv8r-none-eabihf {{verbose}} || FAIL=1
 	./tests.sh examples/mps3-an536 thumbv8r-none-eabihf -Zbuild-std=core {{verbose}} || FAIL=1
 	RUSTFLAGS=-Ctarget-cpu=cortex-r52 ./tests.sh examples/mps3-an536 armv8r-none-eabihf --features=fpu-d32 --target-dir=target-d32 {{verbose}} || FAIL=1
