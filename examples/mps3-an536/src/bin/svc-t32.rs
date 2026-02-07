@@ -23,12 +23,13 @@ fn main() -> ! {
 
 /// This is our SVC exception handler
 #[exception(SupervisorCall)]
-fn svc_handler(arg: u32) {
+fn svc_handler(arg: u32, _frame: &aarch32_rt::Frame) -> u32 {
     println!("In svc_handler, with arg=0x{:06x}", arg);
     if arg == 0x12 {
         // test nested SVC calls
         do_svc2();
     }
+    0
 }
 
 #[instruction_set(arm::t32)]

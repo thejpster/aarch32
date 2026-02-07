@@ -16,33 +16,28 @@ core::arch::global_asm!(
     .global _asm_default_irq_handler
     .type _asm_default_irq_handler, %function
     _asm_default_irq_handler:
-        // make sure we jump back to the right place
-        sub     lr, lr, 4
-        // save our LR
-        stmfd   sp!, {{ lr }}
-        // The hardware has copied the interrupted task's CPSR to SPSR_irq
-        mrs     lr, spsr
-        stmfd   sp!, {{ lr }}
-        // switch to system mode so we can handle another interrupt
-        // (because if we interrupt irq mode we trash our own shadow registers)
-        msr     cpsr_c, {sys_mode}
-        // save state to the system stack (adjusting SP for alignment)
-    "#,
-    crate::save_context!(),
+        sub     lr, lr, 4                 // make sure we jump back to the right place
+        push    {{ lr }}                  // save adjusted LR to IRQ stack
+        mrs     lr, spsr                  // The hardware has copied the interrupted task's CPSR to SPSR_irq - grab it and
+        push    {{ lr }}                  //   save it to IRQ stack using LR
+        msr     cpsr_c, {sys_mode}        // switch to system mode so we can handle another interrupt (because if we interrupt irq mode we trash our own shadow registers)
+        mov     lr, sp                    // align SP down to eight byte boundary using LR
+        and     lr, lr, 7                 //
+        sub     sp, lr                    // SP now aligned - only push 64-bit values from here
+        push    {{ r0-r3, r12, lr }}      // push alignment amount (in LR) and preserved registers
+     "#,
+    crate::save_fpu_context!(),
     r#"
-        // call C handler (they may choose to re-enable interrupts)
-        bl      _irq_handler
-        // restore from the system stack
+        bl      _irq_handler              // call C handler (they may choose to re-enable interrupts)
     "#,
-    crate::restore_context!(),
+    crate::restore_fpu_context!(),
     r#"
-        // switch back to IRQ mode (with IRQ masked)
-        msr     cpsr_c, {irq_mode}
-        // load and restore SPSR
-        ldmia   sp!, {{ lr }}
-        msr     spsr, lr
-        // return
-        ldmfd   sp!, {{ pc }}^
+        pop     {{ r0-r3, r12, lr }}      // restore alignment amount (in LR) and preserved registers
+        add     sp, lr                    // restore SP alignment using LR
+        msr     cpsr_c, {irq_mode}        // switch back to IRQ mode (with IRQ masked)
+        ldmia   sp!, {{ lr }}             // load and restore SPSR using LR
+        msr     spsr, lr                  //
+        ldmfd   sp!, {{ pc }}^            // return from exception
     .size _asm_default_irq_handler, . - _asm_default_irq_handler
     "#,
     // sys mode with IRQ masked
