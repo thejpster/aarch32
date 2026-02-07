@@ -8,13 +8,12 @@ core::arch::global_asm!(
     // Work around https://github.com/rust-lang/rust/issues/127269
     .fpu vfp2
 
-    .section .text._asm_default_irq_handler
-
     // Called from the vector table when we have an interrupt.
     // Saves state and calls a C-compatible handler like
     // `extern "C" fn _irq_handler();`
-    .global _asm_default_irq_handler
+    .section .text._asm_default_irq_handler
     .arm
+    .global _asm_default_irq_handler
     .type _asm_default_irq_handler, %function
     _asm_default_irq_handler:
         // make sure we jump back to the right place

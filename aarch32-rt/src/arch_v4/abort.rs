@@ -5,13 +5,13 @@ core::arch::global_asm!(
     // Work around https://github.com/rust-lang/rust/issues/127269
     .fpu vfp2
 
-    .section .text._asm_default_data_abort_handler
 
     // Called from the vector table when we have an undefined exception.
     // Saves state and calls a C-compatible handler like
     // `extern "C" fn _data_abort_handler(addr: usize);`
-    .global _asm_default_data_abort_handler
+    .section .text._asm_default_data_abort_handler
     .arm
+    .global _asm_default_data_abort_handler
     .type _asm_default_data_abort_handler, %function
     _asm_default_data_abort_handler:
         // Subtract 8 from the stored LR, see p.1214 of the ARMv7-A architecture manual.
@@ -39,13 +39,13 @@ core::arch::global_asm!(
         movs    pc, lr
     .size _asm_default_data_abort_handler, . - _asm_default_data_abort_handler
 
-    .section .text._asm_default_prefetch_abort_handler
 
     // Called from the vector table when we have a prefetch abort.
     // Saves state and calls a C-compatible handler like
     // `extern "C" fn _prefetch_abort_handler(addr: usize);`
-    .global _asm_default_prefetch_abort_handler
+    .section .text._asm_default_prefetch_abort_handler
     .arm
+    .global _asm_default_prefetch_abort_handler
     .type _asm_default_prefetch_abort_handler, %function
     _asm_default_prefetch_abort_handler:
         // Subtract 4 from the stored LR, see p.1212 of the ARMv7-A architecture manual.
