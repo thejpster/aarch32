@@ -301,7 +301,8 @@ fn handle_vector(args: TokenStream, input: TokenStream, kind: VectorKind) -> Tok
         VectorKind::Interrupt => Exception::Irq,
     };
 
-    let block = f.block;
+    let func_name = f.sig.ident.clone();
+    let block = f.block.clone();
     let (ref cfgs, ref attrs) = extract_cfgs(f.attrs.clone());
 
     let handler = match exception {
@@ -387,7 +388,7 @@ fn handle_vector(args: TokenStream, input: TokenStream, kind: VectorKind) -> Tok
                 )
             }
         }
-        // extern "C" fn _svc_handler(addr: usize);
+        // extern "C" fn _svc_handler(arg: u32, args: &Frame) -> u32
         Exception::SupervisorCall => {
             let tramp_ident = Ident::new("__aarch32_rt_svc_handler", Span::call_site());
             quote!(
@@ -395,8 +396,10 @@ fn handle_vector(args: TokenStream, input: TokenStream, kind: VectorKind) -> Tok
                 #(#attrs)*
                 #[doc(hidden)]
                 #[export_name = "_svc_handler"]
-                pub unsafe extern "C" fn #tramp_ident(arg: u32) {
-                    #block
+                pub unsafe extern "C" fn #tramp_ident(arg: u32, frame: &aarch32_rt::Frame) -> u32 {
+                    #f
+
+                    #func_name(arg, frame)
                 }
             )
         }

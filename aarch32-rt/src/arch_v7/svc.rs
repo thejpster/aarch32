@@ -6,42 +6,43 @@ core::arch::global_asm!(
     // Work around https://github.com/rust-lang/rust/issues/127269
     .fpu vfp3
 
-    .section .text._asm_default_svc_handler
-
     // Called from the vector table when we have an software interrupt.
     // Saves state and calls a C-compatible handler like
-    // `extern "C" fn _svc_handler(svc: u32);`
+    // `extern "C" fn _svc_handler(arg: u32, frame: &Frame) -> u32;`
+    .section .text._asm_default_svc_handler
+    .arm
     .global _asm_default_svc_handler
     .type _asm_default_svc_handler, %function
     _asm_default_svc_handler:
-        // state save from compiled code
-        srsfd   sp!, #{svc_mode}
+        srsfd   sp!, #{svc_mode}          // store return state to SVC stack
+        push    {{ r12, lr }}             // save LR and R12 - can now use R12 (but leave LR alone for SVC code lookup)
+        mov     r12, sp                   // align SP down to eight byte boundary using R12
+        and     r12, r12, 7               //
+        sub     sp, r12                   // SP now aligned - only push 64-bit values from here
+        push    {{ r0-r6, r12 }}          // push alignment amount, and stacked SVC argument registers (must be even number of regs for alignment)
+        mov     r12, sp                   // save SP for integer frame
     "#,
-    crate::save_context!(),
+    crate::save_fpu_context!(),
     r#"
-        mrs     r0, spsr                 // Load processor status that was banked on entry
-        tst     r0, {t_bit}              // SVC occurred from Thumb state?
-        beq     1f
-        ldrh    r0, [lr,#-2]             // Yes: Load halfword and...
-        bic     r0, r0, #0xFF00          // ...extract comment field
-        b       2f
-    1:
-        ldr     r0, [lr,#-4]             // No: Load word and...
-        bic     r0, r0, #0xFF000000      // ...extract comment field
-    2:
-        // r0 now contains SVC number
+        mrs     r0, spsr                  // Load processor status that was banked on entry
+        tst     r0, {t_bit}               // SVC occurred from Thumb state?
+        ldrhne  r0, [lr,#-2]              // Yes: Load halfword and...
+        bicne   r0, r0, #0xFF00           // ...extract comment field
+        ldreq   r0, [lr,#-4]              // No: Load word and...
+        biceq   r0, r0, #0xFF000000       // ...extract comment field
+        mov     r1, r12                   // pass the stacked integer registers in r1
         bl      _svc_handler
+        mov     lr, r0                    // move r0 out of the way - restore_fpu_context will trash it
     "#,
-    crate::restore_context!(),
+    crate::restore_fpu_context!(),
     r#"
-        // Return from the asm handler
-        rfefd   sp!
+        pop     {{ r0-r6, r12 }}          // restore stacked registers and alignment amount
+        mov     r0, lr                    // replace R0 with return value from _svc_handler
+        add     sp, r12                   // restore SP alignment using R12
+        pop     {{ r12, lr }}             // restore R12 and LR
+        rfefd   sp!                       // return from exception
     .size _asm_default_svc_handler, . - _asm_default_svc_handler
     "#,
     svc_mode = const crate::ProcessorMode::Svc as u8,
-    t_bit = const {
-        crate::Cpsr::new_with_raw_value(0)
-            .with_t(true)
-            .raw_value()
-    },
+    t_bit = const { crate::Cpsr::new_with_raw_value(0).with_t(true).raw_value() },
 );
