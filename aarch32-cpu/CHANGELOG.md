@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+- Added `Iciallu` register which allows invalidating the instruction cache.
+
 ## [aarch32-cpu v0.2.0]
 
 - Mark `asm::irq_enable()` as unsafe to match `interrupt::enable()`
