@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Reworked stack allocation (PR #93)
 - Changed `#[entry]`, `#[exception]` and `#[irq]` to hide the handler function
+- Discard `.ARM.exidx` and `.ARM.extab` sections/symbols which are not relevant and could
+  otherwise be placed at wrong locations.
 
 ## [aarch32-rt v0.1.0]
 
