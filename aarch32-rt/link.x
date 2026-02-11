@@ -117,6 +117,10 @@ SECTIONS {
 
     /DISCARD/ : {
         *(.note .note*)
+        /* Discard these unwinding/exception related symbols, they are not used */
+        *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+        /* Discard these exception related symbols, they are not used */
+        *(.ARM.extab* .gnu.linkonce.armextab.*)
     }
 }
 
