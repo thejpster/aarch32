@@ -58,12 +58,12 @@ fn my_main() -> ! {
     for _ in 0..1_000 {
         if MARKER.load(SeqCst) == 2 {
             println!("catch all works. All done!");
-            semihosting::process::exit(0);
+            versatileab::exit(0);
         }
     }
 
     println!("Not interrupted!?");
-    semihosting::process::exit(1);
+    versatileab::exit(1);
 }
 
 /// Our low-prio handler re-enables interrupts and triggers a second,

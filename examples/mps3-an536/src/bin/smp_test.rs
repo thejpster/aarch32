@@ -84,7 +84,7 @@ fn main() -> ! {
         if counter == CORE0_WILL_WAIT {
             println!("CPU 1 is missing?!");
 
-            semihosting::process::exit(0);
+            mps3_an536::exit(0);
         }
     }
 
@@ -125,7 +125,7 @@ fn main() -> ! {
         code = 1;
     }
 
-    semihosting::process::exit(code);
+    mps3_an536::exit(code);
 }
 
 /// The entry-point to the Rust application.

@@ -20,7 +20,7 @@ fn main() -> ! {
         svc12_from_t32();
     }
     println!("x = {}, y = {}, z = {:0.3}", x, y, z);
-    semihosting::process::exit(0);
+    mps3_an536::exit(0);
 }
 
 /// This is our SVC exception handler

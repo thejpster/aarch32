@@ -28,9 +28,13 @@ fn main() -> ! {
         unaligned_from_a32();
     }
 
+    // turn it off before we do the stack dump on exit, because println! has been
+    // observed to do unaligned reads.
+    disable_alignment_check();
+
     println!("Recovered from fault OK!");
 
-    semihosting::process::exit(0);
+    versatileab::exit(0);
 }
 
 // These functions are written in assembly

@@ -25,6 +25,8 @@ pub mod cache;
 pub mod interrupt;
 pub mod mmu;
 pub mod register;
+#[cfg(target_arch = "arm")]
+pub mod stacks;
 
 #[cfg(any(test, doc, arm_architecture = "v7-r"))]
 pub mod pmsav7;

@@ -25,7 +25,7 @@ fn main() -> ! {
 
     println!("Recovered from fault OK!");
 
-    semihosting::process::exit(0);
+    mps3_an536::exit(0);
 }
 
 // These functions are written in assembly

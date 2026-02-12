@@ -58,7 +58,7 @@ fn main() -> ! {
 
         if count == 10 {
             println!("Timer IRQ test completed OK");
-            semihosting::process::exit(0);
+            mps3_an536::exit(0);
         }
     }
 }

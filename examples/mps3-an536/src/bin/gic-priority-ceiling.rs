@@ -87,7 +87,7 @@ fn main() -> ! {
 
     println!("IRQ test completed OK");
 
-    semihosting::process::exit(0);
+    mps3_an536::exit(0);
 }
 
 fn dump_sctlr() {

@@ -16,7 +16,7 @@ fn main() -> ! {
     test_changing_sctlr();
     #[cfg(arm_architecture = "v7-r")]
     mpu_pmsa_v7();
-    semihosting::process::exit(0);
+    versatileab::exit(0);
 }
 
 fn chip_info() {
