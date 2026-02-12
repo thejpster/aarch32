@@ -10,10 +10,8 @@
 ///
 /// Pass a range of valid, readable, memory with 32-bit aligned addresses.
 pub unsafe fn stack_used_bytes(stack: core::ops::Range<*const u32>) -> (usize, usize) {
-    let start = stack.start;
-    let end: *const u32 = stack.end;
-    let size_words = unsafe { end.offset_from_unsigned(start) };
-    let free_words = unsafe { stack_used_bytes_asm(start, size_words) };
+    let size_words = unsafe { stack.end.offset_from(stack.start) } as usize;
+    let free_words = unsafe { stack_used_bytes_asm(stack.start, size_words) };
     let used_words = size_words - free_words;
     (
         size_words * core::mem::size_of::<u32>(),
