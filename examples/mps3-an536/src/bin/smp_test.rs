@@ -39,7 +39,7 @@ impl<const LEN_BYTES: usize> Stack<LEN_BYTES> {
 
 unsafe impl<const LEN_BYTES: usize> Sync for Stack<LEN_BYTES> {}
 
-static CORE1_STACK: Stack<{ 8 * 1024 * 1024 }> = Stack::new();
+static CORE1_STACK: Stack<{ 256 * 1024 }> = Stack::new();
 
 static CORE1_BOOTED: AtomicBool = AtomicBool::new(false);
 
