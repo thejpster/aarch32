@@ -15,6 +15,7 @@ const MAX_LEN: f32 = BAR.len() as f32;
 /// It is called by the start-up.
 #[entry]
 fn main() -> ! {
+    versatileab::init();
     const STEPS: u16 = 100;
     const RADIANS_PER_STEP: f32 = (4.0 * core::f32::consts::PI) / (STEPS as f32);
     println!("Sine wave test (f32)...");

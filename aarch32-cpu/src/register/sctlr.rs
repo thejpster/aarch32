@@ -93,6 +93,12 @@ impl Sctlr {
         let mut value = Self::read();
         f(&mut value);
         Self::write(value);
+        // flush the pipeline on Armv7-A, in case they changed the MMU bit
+        #[cfg(arm_architecture = "v7-a")]
+        unsafe {
+            core::arch::asm!("dsb");
+            core::arch::asm!("isb");
+        }
     }
 }
 

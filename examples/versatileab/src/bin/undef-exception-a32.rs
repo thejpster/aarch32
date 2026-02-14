@@ -16,6 +16,7 @@ static COUNTER: AtomicU32 = AtomicU32::new(0);
 /// It is called by the start-up.
 #[entry]
 fn main() -> ! {
+    versatileab::init();
     println!("Hello, this is a undef exception example");
 
     unsafe {

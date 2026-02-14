@@ -18,6 +18,7 @@ static COUNTER: AtomicU32 = AtomicU32::new(0);
 /// It is called by the start-up.
 #[entry]
 fn main() -> ! {
+    versatileab::init();
     // Enable alignment check for Armv7-R. Was not required
     // on Cortex-A for some reason, even though the bit was not set.
     enable_alignment_check();
