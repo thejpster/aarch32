@@ -17,6 +17,7 @@ static COUNTER: AtomicU32 = AtomicU32::new(0);
 /// It is called by the start-up.
 #[entry]
 fn main() -> ! {
+    versatileab::init();
     println!("Hello, this is a prefetch abort exception example");
 
     // A BKPT instruction triggers a Prefetch Abort except when Halting debug-mode is enabled.
