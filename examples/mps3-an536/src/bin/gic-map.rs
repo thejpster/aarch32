@@ -9,8 +9,8 @@ use core::cell::RefCell;
 
 use aarch32_rt::{entry, irq};
 use arm_gic::{
-    gicv3::{GicCpuInterface, Group, InterruptGroup, SgiTarget, SgiTargetGroup},
     IntId,
+    gicv3::{GicCpuInterface, Group, InterruptGroup, SgiTarget, SgiTargetGroup},
 };
 use heapless::linear_map::LinearMap;
 use mps3_an536::InterruptHandler;

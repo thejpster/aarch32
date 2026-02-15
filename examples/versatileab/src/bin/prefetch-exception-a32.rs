@@ -32,7 +32,7 @@ fn main() -> ! {
 }
 
 // These functions are written in assembly
-extern "C" {
+unsafe extern "C" {
     fn bkpt_from_a32();
 }
 

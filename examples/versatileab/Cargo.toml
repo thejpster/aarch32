@@ -5,14 +5,13 @@ authors = [
 ]
 default-run = "hello"
 description = "Examples for the QEMU Versatile Application baseboard device (Arm Cortex-A8 or Arm Cortex-R5)"
-edition = "2021"
+edition = "2024"
 homepage = "https://github.com/rust-embedded/aarch32"
 license = "MIT OR Apache-2.0"
 name = "versatileab"
 publish = false
 readme = "README.md"
 repository = "https://github.com/rust-embedded/aarch32.git"
-rust-version = "1.83"
 version = "0.0.0"
 
 [dependencies]

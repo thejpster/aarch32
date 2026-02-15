@@ -7,8 +7,8 @@
 
 use aarch32_rt::{entry, irq};
 use arm_gic::{
-    gicv3::{GicCpuInterface, Group, InterruptGroup, SgiTarget, SgiTargetGroup},
     IntId,
+    gicv3::{GicCpuInterface, Group, InterruptGroup, SgiTarget, SgiTargetGroup},
 };
 use mps3_an536::InterruptHandler;
 use semihosting::println;
@@ -138,7 +138,7 @@ fn irq_handler() {
         }
         // handle the interrupt
         println!("- handle_interrupt_with_id({:?})", next_int_id);
-        extern "Rust" {
+        unsafe extern "Rust" {
             static __irq_entries_start: InterruptHandler;
             static __irq_entries_end: InterruptHandler;
         }

@@ -13,7 +13,7 @@
 use core::cell::{RefCell, UnsafeCell};
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
-use aarch32_cpu::register::{cpsr::ProcessorMode, Cpsr, Hactlr, Sctlr};
+use aarch32_cpu::register::{Cpsr, Hactlr, Sctlr, cpsr::ProcessorMode};
 use aarch32_rt::entry;
 use semihosting::println;
 
@@ -63,7 +63,7 @@ const CS_MUTEX_LOOPS: u32 = 1000;
 #[entry]
 fn main() -> ! {
     let fpga_led = 0xE020_2000 as *mut u32;
-    extern "C" {
+    unsafe extern "C" {
         static mut _core1_stack_pointer: usize;
     }
     unsafe {
@@ -131,7 +131,7 @@ fn main() -> ! {
 /// The entry-point to the Rust application.
 ///
 /// It is called by the start-up code below, on Core 1.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn kmain2() {
     CORE1_BOOTED.store(true, Ordering::SeqCst);
 
