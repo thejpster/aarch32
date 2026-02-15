@@ -8,4 +8,6 @@ break _asm_irq_handler
 break _asm_fiq_handler
 layout asm
 layout regs
+set logging file ./target/debug.log
+set logging enabled on
 stepi
