@@ -138,7 +138,7 @@ fn irq_handler() {
         }
         // handle the interrupt
         println!("- handle_interrupt_with_id({:?})", next_int_id);
-        extern "Rust" {
+        unsafe extern "Rust" {
             static __irq_entries_start: InterruptHandler;
             static __irq_entries_end: InterruptHandler;
         }

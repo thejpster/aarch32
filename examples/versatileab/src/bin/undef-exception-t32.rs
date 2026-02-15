@@ -29,7 +29,7 @@ fn main() -> ! {
 }
 
 // These functions are written in assembly
-extern "C" {
+unsafe extern "C" {
     fn udf_from_t32();
 }
 

@@ -10,7 +10,7 @@ use aarch32_rt::{entry, exception};
 use semihosting::println;
 use versatileab as _;
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 static COUNTER: AtomicU32 = AtomicU32::new(0);
 
 /// The entry-point to the Rust application.
@@ -34,7 +34,7 @@ fn main() -> ! {
 }
 
 // These functions are written in assembly
-extern "C" {
+unsafe extern "C" {
     fn unaligned_from_a32();
 }
 
