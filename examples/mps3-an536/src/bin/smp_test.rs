@@ -13,7 +13,7 @@
 use core::cell::{RefCell, UnsafeCell};
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
-use aarch32_cpu::register::{cpsr::ProcessorMode, Cpsr, Hactlr, Sctlr};
+use aarch32_cpu::register::{Cpsr, Hactlr, Sctlr, cpsr::ProcessorMode};
 use aarch32_rt::entry;
 use semihosting::println;
 
