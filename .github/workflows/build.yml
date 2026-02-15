@@ -418,5 +418,6 @@ jobs:
   all:
     runs-on: ubuntu-24.04
     needs: [docs-all, build-all, fmt-all, unit-test-all, test-qemu-all] # not gating on clippy-all
+    if: failure()
     steps:
-      - run: /bin/true
+      - run: exit 1
