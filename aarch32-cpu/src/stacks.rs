@@ -11,8 +11,8 @@
 /// Pass a range of valid, readable, memory with 32-bit aligned addresses.
 pub unsafe fn stack_used_bytes(stack: core::ops::Range<*const u32>) -> (usize, usize) {
     let size_words = unsafe { stack.end.offset_from(stack.start) } as usize;
-    let free_words = unsafe { stack_used_bytes_asm(stack.start, size_words) };
-    let used_words = size_words - free_words;
+    let unused_words = unsafe { stack_unused_bytes_asm(stack.start, size_words) };
+    let used_words = size_words - unused_words;
     (
         size_words * core::mem::size_of::<u32>(),
         used_words * core::mem::size_of::<u32>(),
@@ -24,14 +24,14 @@ pub unsafe fn stack_used_bytes(stack: core::ops::Range<*const u32>) -> (usize, u
 /// Written in Arm assembly to avoid any issues with pointing at things that are
 /// not validly initialised integers (as far as Rust is concerned).
 ///
-/// Returns a count of the number of words equal to 0x0 at `start`, with a
+/// Returns a count of the number of contiguous words equal to 0x0 at `start`, with a
 /// maximum of `size` words
 ///
 /// # Safety
 ///
-/// The address `start` must be 32-bit aligned, and point to a region of memory
+/// The address `start` must be correctly aligned, and point to a region of memory
 /// of at least `size` words in length.
-unsafe fn stack_used_bytes_asm(start: *const u32, size: usize) -> usize {
+unsafe fn stack_unused_bytes_asm(start: *const u32, size: usize) -> usize {
     let result: usize;
     core::arch::asm!(
         r#"
