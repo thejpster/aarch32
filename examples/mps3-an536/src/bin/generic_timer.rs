@@ -55,5 +55,5 @@ fn main() -> ! {
         println!("{} countdown hit zero!", name,);
     }
 
-    semihosting::process::exit(0);
+    mps3_an536::exit(0);
 }

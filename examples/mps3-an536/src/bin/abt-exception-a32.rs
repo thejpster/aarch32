@@ -28,9 +28,13 @@ fn main() -> ! {
         unaligned_from_a32();
     }
 
+    // turn it off before we do the stack dump on exit, because println! has been
+    // observed to do unaligned reads.
+    disable_alignment_check();
+
     println!("Recovered from fault OK!");
 
-    semihosting::process::exit(0);
+    mps3_an536::exit(0);
 }
 
 // These functions are written in assembly
@@ -97,6 +101,7 @@ unsafe fn data_abort_handler(addr: usize) -> usize {
             "Bad fault address {:08x} is not {:08x}",
             addr, expect_fault_at
         );
+        semihosting::process::abort();
     }
 
     let expect_fault_from = core::ptr::addr_of!(COUNTER) as usize + 1;
@@ -108,6 +113,7 @@ unsafe fn data_abort_handler(addr: usize) -> usize {
             "Bad DFAR address {:08x} is not {:08x}",
             dfar.0, expect_fault_from
         );
+        semihosting::process::abort();
     }
 
     match COUNTER.fetch_add(1, Ordering::Relaxed) {

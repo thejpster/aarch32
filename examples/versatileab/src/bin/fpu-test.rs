@@ -32,5 +32,5 @@ fn main() -> ! {
         let bar_len = ((sine + 1.0) * (f64::from(MAX_LEN) / 2.0)) as usize;
         println!("({:7.04}) {:.*}o", sine, bar_len, BAR);
     }
-    semihosting::process::exit(0);
+    versatileab::exit(0);
 }

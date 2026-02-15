@@ -8,7 +8,7 @@
 export RUSTC_BOOTSTRAP := "1"
 
 
-# If you run with `just v=1` then we make cargo run in verbose mode
+# If you run with `just --set v 1` then we make cargo run in verbose mode
 v := "0"
 verbose := if v == "1" { "--verbose" } else { "" }
 

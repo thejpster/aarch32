@@ -18,7 +18,7 @@ fn main() -> ! {
     #[cfg(arm_architecture = "v8-r")]
     mpu_pmsa_v8();
     test_changing_sctlr();
-    semihosting::process::exit(0);
+    mps3_an536::exit(0);
 }
 
 fn chip_info() {
