@@ -362,7 +362,6 @@ jobs:
           export PATH=/opt/qemu/bin:$PATH
           just test-qemu-v7a
 
-
   # Run some programs in QEMU 9 for Armv7-R
   # These tests build with nightly as pinned by the rust-toolchain.toml file, because they include Tier 3 targets
   test-qemu-v7r:
@@ -384,7 +383,7 @@ jobs:
         run: |
           export PATH=/opt/qemu/bin:$PATH
           just test-qemu-v7r
-  
+
   # Run some programs in QEMU 9 for Armv8-R
   # These tests build with nightly as pinned by the rust-toolchain.toml file, because they include Tier 3 targets
   test-qemu-v8r:
@@ -410,7 +409,15 @@ jobs:
   # Gather all the above QEMU jobs together for the purposes of getting an overall pass-fail
   test-qemu-all:
     runs-on: ubuntu-24.04
-    needs: [test-qemu-v4t, test-qemu-v5te, test-qemu-v6, test-qemu-v7a, test-qemu-v7r, test-qemu-v8r]
+    needs:
+      [
+        test-qemu-v4t,
+        test-qemu-v5te,
+        test-qemu-v6,
+        test-qemu-v7a,
+        test-qemu-v7r,
+        test-qemu-v8r,
+      ]
     steps:
       - run: /bin/true
 
