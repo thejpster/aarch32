@@ -110,7 +110,7 @@ fn stack_dump() {
     use aarch32_cpu::stacks::stack_used_bytes;
     use core::ptr::addr_of;
 
-    extern "C" {
+    unsafe extern "C" {
         static _sys_stack_end: u32;
         static _sys_stack: u32;
         static _fiq_stack_end: u32;
