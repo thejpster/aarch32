@@ -50,7 +50,7 @@ macro_rules! svc {
     ($num:expr) => { {
         let retval: u32;
         unsafe {
-            core::arch::asm!("svc {arg}", arg = const $num, lateout("r0") retval, out("lr") _);
+            core::arch::asm!("svc {arg}", arg = const $num, lateout("r0") retval);
         }
         retval
     } }
@@ -75,8 +75,7 @@ macro_rules! svc1 {
                 // Do the SVCall
                 "svc     {arg}",
                 arg = const $num,
-                inout("r0") arg0 => retval,
-                out("lr") _);
+                inout("r0") arg0 => retval);
         }
         retval
     } }
@@ -103,8 +102,7 @@ macro_rules! svc2 {
                 "svc     {arg}",
                 arg = const $num,
                 inout("r0") arg0 => retval,
-                in("r1") arg1,
-                out("lr") _);
+                in("r1") arg1);
         }
         retval
     } }
@@ -133,8 +131,7 @@ macro_rules! svc3 {
                 arg = const $num,
                 inout("r0") arg0 => retval,
                 in("r1") arg1,
-                in("r2") arg2,
-                out("lr") _);
+                in("r2") arg2);
         }
         retval
     } }
@@ -165,8 +162,7 @@ macro_rules! svc4 {
                 inout("r0") arg0 => retval,
                 in("r1") arg1,
                 in("r2") arg2,
-                in("r3") arg3,
-                out("lr") _);
+                in("r3") arg3);
         }
         retval
     } }
@@ -199,8 +195,7 @@ macro_rules! svc5 {
                 in("r1") arg1,
                 in("r2") arg2,
                 in("r3") arg3,
-                in("r4") arg4,
-                out("lr") _);
+                in("r4") arg4);
         }
         retval
     } }
@@ -235,8 +230,7 @@ macro_rules! svc6 {
                 in("r2") arg2,
                 in("r3") arg3,
                 in("r4") arg4,
-                in("r5") arg5,
-                out("lr") _);
+                in("r5") arg5);
         }
         retval
     } }
