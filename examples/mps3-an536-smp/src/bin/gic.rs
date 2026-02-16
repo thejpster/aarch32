@@ -133,8 +133,8 @@ pub extern "C" fn kmain2() {
 
 /// Called when either Arm CPU gets an IRQ
 ///
-/// Talks to the GICv3 to find out which interrupts are pending and calls
-/// [`handle_interrupt_with_id`] for each of them, with interrupts re-enabled.
+/// Talks to the GICv3 to find out which interrupts are pending,
+/// handles the interrupt, and then tells the GICv3 it has been handled.
 #[aarch32_rt::irq]
 fn irq_handler() {
     let id = aarch32_cpu::register::Mpidr::read();
