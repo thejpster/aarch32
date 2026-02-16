@@ -143,7 +143,7 @@ fn stack_dump() {
     unsafe {
         for (name, range) in stacks {
             let (total, used) = stack_used_bytes(range.clone());
-            let percent = used * 100 / total;
+            let percent = (used * 100).checked_div(total).unwrap_or(999);
             // Send to stderr, so it doesn't mix with expected output on stdout
             semihosting::eprintln!(
                 "{} Stack = {:6} used of {:6} bytes ({:03}%) @ {:08x?}",
