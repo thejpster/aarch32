@@ -17,7 +17,7 @@ pub fn irq_disable() {
             orr {0}, {flag}
             msr cpsr, {0}
         "#,
-        in(reg) 0,
+        inout(reg) 0 => _,
         flag = const {
             crate::register::Cpsr::new_with_raw_value(0)
                 .with_i(true)
@@ -42,7 +42,7 @@ pub unsafe fn irq_enable() {
             bic {0}, #{flag}
             msr cpsr, {0}
         "#,
-        in(reg) 0,
+        inout(reg) 0 => _,
         flag = const {
             crate::register::Cpsr::new_with_raw_value(0)
                 .with_i(true)
