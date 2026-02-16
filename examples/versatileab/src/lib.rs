@@ -19,9 +19,9 @@ static WANT_PANIC: portable_atomic::AtomicBool = portable_atomic::AtomicBool::ne
 fn panic(info: &core::panic::PanicInfo) -> ! {
     semihosting::println!("PANIC: {:#?}", info);
     if WANT_PANIC.load(portable_atomic::Ordering::Relaxed) {
-        semihosting::process::exit(0);
+        exit(0);
     } else {
-        semihosting::process::abort();
+        exit(1);
     }
 }
 
