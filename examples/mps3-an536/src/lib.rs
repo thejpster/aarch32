@@ -66,6 +66,11 @@ compile_error!("This example is only compatible to the ARMv8-R architecture");
 
 static WANT_PANIC: AtomicBool = AtomicBool::new(false);
 
+/// Track if we're already in the exit routine.
+///
+/// Stops us doing infinite recursion if we panic whilst doing the stack reporting.
+static IN_EXIT: AtomicBool = AtomicBool::new(false);
+
 /// Called when the application raises an unrecoverable `panic!`.
 ///
 /// Prints the panic to the console and then exits QEMU using a semihosting
@@ -88,7 +93,9 @@ pub fn want_panic() {
 
 /// Exit from QEMU with code
 pub fn exit(code: i32) -> ! {
-    stack_dump();
+    if !IN_EXIT.swap(true, Ordering::Relaxed) {
+        stack_dump();
+    }
     semihosting::process::exit(code)
 }
 

@@ -10,6 +10,11 @@ compile_error!("This example/board is not compatible with the ARMv8-R architectu
 
 static WANT_PANIC: portable_atomic::AtomicBool = portable_atomic::AtomicBool::new(false);
 
+/// Track if we're already in the exit routine.
+///
+/// Stops us doing infinite recursion if we panic whilst doing the stack reporting.
+static IN_EXIT: portable_atomic::AtomicBool = portable_atomic::AtomicBool::new(false);
+
 /// Called when the application raises an unrecoverable `panic!`.
 ///
 /// Prints the panic to the console and then exits QEMU using a semihosting
@@ -32,7 +37,9 @@ pub fn want_panic() {
 
 /// Exit from QEMU with code
 pub fn exit(code: i32) -> ! {
-    stack_dump();
+    if !IN_EXIT.swap(true, portable_atomic::Ordering::Relaxed) {
+        stack_dump();
+    }
     semihosting::process::exit(code)
 }
 
