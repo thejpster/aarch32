@@ -9,7 +9,6 @@ pub const NUM_L1_PAGE_TABLE_ENTRIES: usize = 4096;
 ///
 /// You should create a static variable of this type, to represent your page table.
 #[repr(C, align(1048576))]
-#[allow(unused)]
 pub struct L1Table {
     pub entries: core::cell::UnsafeCell<[L1Section; NUM_L1_PAGE_TABLE_ENTRIES]>,
 }
