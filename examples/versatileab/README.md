@@ -90,7 +90,7 @@ may change the MSRV at any time.
 - Copyright (c) Ferrous Systems
 - Copyright (c) The Rust Embedded Devices Working Group developers
 
-Licensed under either [MIT](./LICENSE-MIT) or [Apache-2.0](./LICENSE-APACHE) at
+Licensed under either [MIT](../LICENSE-MIT) or [Apache-2.0](../LICENSE-APACHE) at
 your option.
 
 ## Contribution
