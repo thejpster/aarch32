@@ -54,14 +54,14 @@ build-arm-targets:
 
 # Builds our workspace with various features, building core from source, but skipping anything that requires atomics
 build-tier3-no-atomics target:
-    cargo build --target {{target}} -Zbuild-std=core {{verbose}}
-    cargo build --target {{target}} -Zbuild-std=core --features "serde, defmt, critical-section-single-core, check-asm" {{verbose}}
+    cargo +nightly build --target {{target}} -Zbuild-std=core {{verbose}}
+    cargo +nightly build --target {{target}} -Zbuild-std=core --features "serde, defmt, critical-section-single-core, check-asm" {{verbose}}
 
 # Builds our workspace with various features, building core from source
 build-tier3 target:
-    cargo build --target {{target}} -Zbuild-std=core {{verbose}}
-    cargo build --target {{target}} -Zbuild-std=core --features "serde, defmt, critical-section-multi-core, check-asm" {{verbose}}
-    cargo build --target {{target}} -Zbuild-std=core --features "serde, defmt, critical-section-single-core, check-asm" {{verbose}}
+    cargo +nightly build --target {{target}} -Zbuild-std=core {{verbose}}
+    cargo +nightly build --target {{target}} -Zbuild-std=core --features "serde, defmt, critical-section-multi-core, check-asm" {{verbose}}
+    cargo +nightly build --target {{target}} -Zbuild-std=core --features "serde, defmt, critical-section-single-core, check-asm" {{verbose}}
 
 # Builds our workspace with various features
 build-tier2 target:
