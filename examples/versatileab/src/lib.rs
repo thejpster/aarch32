@@ -10,6 +10,11 @@ compile_error!("This example/board is not compatible with the ARMv8-R architectu
 
 static WANT_PANIC: portable_atomic::AtomicBool = portable_atomic::AtomicBool::new(false);
 
+/// Track if we're already in the exit routine.
+///
+/// Stops us doing infinite recursion if we panic whilst doing the stack reporting.
+static IN_EXIT: portable_atomic::AtomicBool = portable_atomic::AtomicBool::new(false);
+
 /// Called when the application raises an unrecoverable `panic!`.
 ///
 /// Prints the panic to the console and then exits QEMU using a semihosting
@@ -19,9 +24,9 @@ static WANT_PANIC: portable_atomic::AtomicBool = portable_atomic::AtomicBool::ne
 fn panic(info: &core::panic::PanicInfo) -> ! {
     semihosting::println!("PANIC: {:#?}", info);
     if WANT_PANIC.load(portable_atomic::Ordering::Relaxed) {
-        semihosting::process::exit(0);
+        exit(0);
     } else {
-        semihosting::process::abort();
+        exit(1);
     }
 }
 
@@ -32,7 +37,9 @@ pub fn want_panic() {
 
 /// Exit from QEMU with code
 pub fn exit(code: i32) -> ! {
-    stack_dump();
+    if !IN_EXIT.swap(true, portable_atomic::Ordering::Relaxed) {
+        stack_dump();
+    }
     semihosting::process::exit(code)
 }
 
@@ -87,7 +94,7 @@ fn stack_dump() {
     unsafe {
         for (name, range) in stacks {
             let (total, used) = stack_used_bytes(range.clone());
-            let percent = used * 100 / total;
+            let percent = (used * 100).checked_div(total).unwrap_or(999);
             // Send to stderr, so it doesn't mix with expected output on stdout
             semihosting::eprintln!(
                 "{} Stack = {:6} used of {:6} bytes ({:03}%) @ {:08x?}",

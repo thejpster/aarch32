@@ -54,7 +54,7 @@ unsafe fn stack_unused_bytes_asm(start: *const u32, size: usize) -> usize {
 3:
         "#,
         size = in(reg) size,
-        start = in(reg) start,
+        start = inout(reg) start => _,
         result = out(reg) result,
         scratch = out(reg) _,
     );
