@@ -81,6 +81,8 @@ impl Ttbr0 {
 /// Outer cacheability attributes
 #[derive(Debug)]
 #[bitbybit::bitenum(u2, exhaustive = true)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum Region {
     /// Normal memory, Outer Non-cacheable
     NonCacheable = 0b00,
