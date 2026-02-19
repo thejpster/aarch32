@@ -34,7 +34,7 @@ minor version release (e.g. from `0.3.0` to `0.3.1`, because this is still a
 * Copyright (c) Ferrous Systems
 * Copyright (c) The Rust Embedded Devices Working Group developers
 
-Licensed under either [MIT](./LICENSE-MIT) or [Apache-2.0](./LICENSE-APACHE) at
+Licensed under either [MIT](../LICENSE-MIT) or [Apache-2.0](../LICENSE-APACHE) at
 your option.
 
 ## Contribution

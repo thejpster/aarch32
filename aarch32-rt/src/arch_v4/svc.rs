@@ -1,4 +1,4 @@
-//! Abort handler for Armv4 to Armv6
+//! SVC handler for Armv4 to Armv6
 
 #[cfg(target_arch = "arm")]
 core::arch::global_asm!(
@@ -9,36 +9,45 @@ core::arch::global_asm!(
 
     // Called from the vector table when we have an software interrupt.
     // Saves state and calls a C-compatible handler like
-    // `extern "C" fn _svc_handler(svc: u32);`
+    // `extern "C" fn _svc_handler(arg: u32, frame: &Frame) -> u32;`
     .section .text._asm_default_svc_handler
     .arm
     .global _asm_default_svc_handler
     .type _asm_default_svc_handler, %function
     _asm_default_svc_handler:
-        stmfd   sp!, {{ r0, lr }}
-        mrs     r0, spsr
-        stmfd   sp!, {{ r0 }}
+        push    {{ r12, lr }}             // save LR and R12 - can now use R12 (but leave LR alone for SVC code lookup)
+        mrs     r12, spsr                 // grab SPSR using R12
+        push    {{ r12 }}                 // save SPSR value
+        mov     r12, sp                   // align SP down to eight byte boundary using R12
+        and     r12, r12, 7               //
+        sub     sp, r12                   // SP now aligned - only push 64-bit values from here
+        push    {{ r0-r6, r12 }}          // push alignment amount, and stacked SVC argument registers (must be even number of regs for alignment)
+        mov     r12, sp                   // save SP for integer frame
     "#,
-    crate::save_context!(),
+    crate::save_fpu_context!(),
     r#"
-        mrs     r0, spsr                 // Load processor status that was banked on entry
-        tst     r0, {t_bit}              // SVC occurred from Thumb state?
+        mrs     r0, spsr                  // Load processor status that was banked on entry
+        tst     r0, {t_bit}               // SVC occurred from Thumb state?
         beq     1f
-        ldrh    r0, [lr,#-2]             // Yes: Load halfword and...
-        bic     r0, r0, #0xFF00          // ...extract comment field
+        ldrh    r0, [lr,#-2]              // Yes: Load halfword and...
+        bic     r0, r0, #0xFF00           // ...r0 now contains SVC number
         b       2f
     1:
-        ldr     r0, [lr,#-4]             // No: Load word and...
-        bic     r0, r0, #0xFF000000      // ...extract comment field
+        ldr     r0, [lr,#-4]              // No: Load word and...
+        bic     r0, r0, #0xFF000000       // ...r0 now contains SVC number
     2:
-        // r0 now contains SVC number
+        mov     r1, r12                   // pass the stacked integer registers in r1
         bl      _svc_handler
+        mov     lr, r0                    // move r0 out of the way - restore_fpu_context will trash it
     "#,
-    crate::restore_context!(),
+    crate::restore_fpu_context!(),
     r#"
-        ldmfd   sp!, {{ r0 }}
-        msr     spsr_cxsf, r0
-        ldmfd   sp!, {{ r0, pc }}^
+        pop     {{ r0-r6, r12 }}          // restore stacked registers and alignment amount
+        mov     r0, lr                    // replace R0 with return value from _svc_handler
+        add     sp, r12                   // restore SP alignment using R12
+        pop     {{ lr }}                  // restore SPSR using LR
+        msr     spsr, lr                  //
+        ldmfd   sp!, {{ r12, pc }}^       // restore R12 and return from exception (^ => restore SPSR to CPSR)
     .size _asm_default_svc_handler, . - _asm_default_svc_handler
     "#,
     t_bit = const { crate::Cpsr::new_with_raw_value(0).with_t(true).raw_value() },
