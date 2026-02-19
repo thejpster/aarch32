@@ -6,42 +6,14 @@ use crate::register::{SysReg, SysRegRead, SysRegWrite};
 #[bitbybit::bitfield(u32, debug, defmt_bitfields(feature = "defmt"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Dacr {
-    #[bits(30..=31, rw)]
-    d15: DomainAccess,
-    #[bits(28..=29, rw)]
-    d14: DomainAccess,
-    #[bits(26..=27, rw)]
-    d13: DomainAccess,
-    #[bits(24..=25, rw)]
-    d12: DomainAccess,
-    #[bits(22..=23, rw)]
-    d11: DomainAccess,
-    #[bits(20..=21, rw)]
-    d10: DomainAccess,
-    #[bits(18..=19, rw)]
-    d9: DomainAccess,
-    #[bits(16..=17, rw)]
-    d8: DomainAccess,
-    #[bits(14..=15, rw)]
-    d7: DomainAccess,
-    #[bits(12..=13, rw)]
-    d6: DomainAccess,
-    #[bits(10..=11, rw)]
-    d5: DomainAccess,
-    #[bits(8..=9, rw)]
-    d4: DomainAccess,
-    #[bits(6..=7, rw)]
-    d3: DomainAccess,
-    #[bits(4..=5, rw)]
-    d2: DomainAccess,
-    #[bits(2..=3, rw)]
-    d1: DomainAccess,
     #[bits(0..=1, rw)]
-    d0: DomainAccess,
+    d: [DomainAccess; 16],
 }
 
 /// Domain Access Permissions
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[bitbybit::bitenum(u2, exhaustive = true)]
 pub enum DomainAccess {
     /// No access. Any access to the domain generates a Domain fault.

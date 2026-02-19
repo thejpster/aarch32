@@ -94,7 +94,7 @@ pub fn set_mmu() {
 pub fn enable_mmu_and_cache() {
     // Enable Manager access to Domain 0
     aarch32_cpu::register::Dacr::modify(|d| {
-        d.set_d0(aarch32_cpu::register::dacr::DomainAccess::Manager);
+        d.set_d(0, aarch32_cpu::register::dacr::DomainAccess::Manager);
     });
     // This function contains the barrier we need to flush the pipeline
     aarch32_cpu::register::Sctlr::modify(|s| {
