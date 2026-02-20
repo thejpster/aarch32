@@ -12,6 +12,7 @@ use versatileab as _;
 /// It is called by the start-up.
 #[entry]
 fn main() -> ! {
+    versatileab::init();
     let x = 1;
     let y = x + 1;
     let z = (y as f64) * 1.5;

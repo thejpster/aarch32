@@ -1,11 +1,29 @@
+//! Code and types for use with MMU programming on a VMSA (Virtual Memory System Architecture) platform
+
 use arbitrary_int::{u12, u2, u3, u4};
 
+/// Number of 1 MiB pages in a 4 GiB virtual address space
+pub const NUM_L1_PAGE_TABLE_ENTRIES: usize = 4096;
+
+/// Holds an L1 page table with appropriate alignment
+///
+/// You should create a static variable of this type, to represent your page table.
+#[repr(C, align(1048576))]
+pub struct L1Table {
+    pub entries: core::cell::UnsafeCell<[L1Section; NUM_L1_PAGE_TABLE_ENTRIES]>,
+}
+
+/// This type is thread-safe
+unsafe impl Sync for L1Table {}
+
+/// Represents an invalid L1 Entry
 #[derive(Debug, thiserror::Error)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[error("invalid L1 entry type {0:?}")]
 pub struct InvalidL1EntryType(pub L1EntryType);
 
+/// Access permissions for a region of memory
 #[bitbybit::bitenum(u3, exhaustive = true)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -40,6 +58,7 @@ impl AccessPermissions {
     }
 }
 
+/// The type of an L1 Entry
 #[bitbybit::bitenum(u2, exhaustive = true)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -82,6 +101,7 @@ impl MemoryRegionAttributesRaw {
     }
 }
 
+/// Whether/how a region is cacheable
 #[bitbybit::bitenum(u2, exhaustive = true)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -93,6 +113,7 @@ pub enum CacheableMemoryAttribute {
     WriteBackNoWriteAlloc = 0b11,
 }
 
+/// Memory attributes for a region
 #[derive(Debug, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

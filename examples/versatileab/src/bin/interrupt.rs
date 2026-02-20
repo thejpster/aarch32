@@ -29,6 +29,7 @@ const TEST_VECTOR2: VectorId = VectorId::new(4);
 /// It is called by the start-up.
 #[entry]
 fn my_main() -> ! {
+    versatileab::init();
     // Safety: Not in a critical-section
     unsafe {
         aarch32_cpu::interrupt::enable();

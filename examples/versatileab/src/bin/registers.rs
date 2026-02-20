@@ -12,6 +12,7 @@ use versatileab as _;
 /// It is called by the start-up.
 #[entry]
 fn main() -> ! {
+    versatileab::init();
     chip_info();
     test_changing_sctlr();
     #[cfg(arm_architecture = "v7-r")]

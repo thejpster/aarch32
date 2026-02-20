@@ -12,6 +12,7 @@ use versatileab as _;
 /// It is called by the start-up.
 #[entry]
 fn my_main() -> ! {
+    versatileab::init();
     let x = 1.0f64;
     let y = x * 2.0;
     println!("Hello, this is semihosting! x = {:0.3}, y = {:0.3}", x, y);

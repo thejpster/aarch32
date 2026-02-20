@@ -2,6 +2,9 @@
 
 #![no_std]
 
+#[cfg(arm_architecture = "v7-a")]
+pub mod mmu;
+
 /// The base address of our PL190 interrupt controller
 pub const PL190_BASE_ADDRESS: usize = 0x1014_0000;
 
@@ -33,6 +36,23 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 /// Set the panic function as no longer returning a failure code via semihosting
 pub fn want_panic() {
     WANT_PANIC.store(true, portable_atomic::Ordering::Relaxed);
+}
+
+/// Init the hardware
+///
+/// Includes enabling the MMU (if we have one)
+pub fn init() {
+    #[cfg(arm_architecture = "v7-a")]
+    mmu::set_mmu();
+
+    #[cfg(arm_architecture = "v7-a")]
+    mmu::enable_mmu_and_cache();
+
+    #[cfg(arm_architecture = "v7-r")]
+    aarch32_cpu::register::Sctlr::modify(|s| {
+        // Enable Cache
+        s.set_c(true);
+    });
 }
 
 /// Exit from QEMU with code
