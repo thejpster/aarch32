@@ -3,16 +3,60 @@
 #![no_std]
 #![no_main]
 
-use aarch32_cpu::register::Hactlr;
-use aarch32_rt::entry;
-use mps3_an536 as _;
+use aarch32_cpu::generic_timer::GenericTimer;
+use aarch32_rt::{entry, exception};
+use arm_gic::{
+    IntId,
+    gicv3::{GicCpuInterface, Group, SecureIntGroup},
+};
 use semihosting::println;
+
+use mps3_an536::HYP_TIMER_PPI;
+
+const SGI_INTID_LO: IntId = IntId::sgi(3);
+const SGI_INTID_HI: IntId = IntId::sgi(4);
 
 /// The entry-point to the Rust application.
 ///
 /// It is called by the start-up code at the bottom of this file.
 #[entry]
 fn main() -> ! {
+    let mut board = mps3_an536::Board::new().unwrap();
+
+    // Only interrupts with a higher priority (numerically lower) will be signalled.
+    GicCpuInterface::set_priority_mask(0x80);
+
+    let mut el2_timer = unsafe { aarch32_cpu::generic_timer::El2PhysicalTimer::new() };
+    println!("Timer Hz = {}", el2_timer.frequency_hz());
+    el2_timer.enable(true);
+    el2_timer.interrupt_mask(false);
+    el2_timer.counter_compare_set(
+        el2_timer
+            .counter()
+            .wrapping_add(el2_timer.frequency_hz() as u64 / 5),
+    );
+
+    println!("Configure Timer Interrupt...");
+    board
+        .gic
+        .set_interrupt_priority(HYP_TIMER_PPI, Some(0), 0x31)
+        .unwrap();
+    board
+        .gic
+        .set_group(HYP_TIMER_PPI, Some(0), Group::Secure(SecureIntGroup::Group1S))
+        .unwrap();
+    board
+        .gic
+        .enable_interrupt(HYP_TIMER_PPI, Some(0), true)
+        .unwrap();
+
+    println!("Enabling interrupts...");
+    dump_sctlr();
+    unsafe {
+        aarch32_cpu::interrupt::enable();
+    }
+    dump_sctlr();
+
     let x = 1.0f64;
     let y = x * 2.0;
     println!("Hello, this is semihosting! x = {:0.3}, y = {:0.3}", x, y);
@@ -24,8 +68,34 @@ fn main() -> ! {
         }
     }
 
-    mps3_an536::want_panic();
-    panic!("I am an example panic");
+    let mut count: u32 = 0;
+    loop {
+        aarch32_cpu::asm::wfi();
+        println!("Main loop wake up {}", count);
+        count = count.wrapping_add(1);
+
+        if count == 10 {
+            println!("Timer IRQ test completed OK");
+            mps3_an536::exit(0);
+        }
+    }
+
+    println!("EL2 timer test completed OK");
+
+    mps3_an536::exit(0);
+}
+
+fn dump_sctlr() {
+    let sctlr = aarch32_cpu::register::Sctlr::read();
+    println!("{:?}", sctlr);
+}
+
+/// This is our HVC exception handler
+#[exception(HypervisorCall)]
+fn hvc_handler(hsr: u32, frame: &aarch32_rt::Frame) -> u32 {
+    let hsr = aarch32_cpu::register::Hsr::new_with_raw_value(hsr);
+    println!("In hvc_handler, with {:08x?}, {:08x?}", hsr, frame);
+    return frame.r0;
 }
 
 // Provide a custom `_start` function that sets us up in EL2 mode, with a
@@ -39,7 +109,6 @@ core::arch::global_asm!(
     .fpu vfp3-d16
 
     .section .text.start
-
     .global _start
     .type _start, %function
     _start:
@@ -82,17 +151,4 @@ core::arch::global_asm!(
         b       .
     .size _start, . - _start
     "#,
-    hactlr_bits = const {
-        Hactlr::new_with_raw_value(0)
-            .with_cpuactlr(true)
-            .with_cdbgdci(true)
-            .with_flashifregionr(true)
-            .with_periphpregionr(true)
-            .with_qosr(true)
-            .with_bustimeoutr(true)
-            .with_intmonr(true)
-            .with_err(true)
-            .with_testr1(true)
-            .raw_value()
-    },
 );
