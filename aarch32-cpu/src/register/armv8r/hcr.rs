@@ -90,7 +90,7 @@ pub struct Hcr {
 }
 
 /// Barrier Shareability upgrade
-/// 
+///
 /// This field determines the minimum Shareability domain that is applied to any
 /// barrier instruction executed from EL1 or EL0
 #[bitbybit::bitenum(u2, exhaustive = true)]
@@ -127,13 +127,20 @@ impl crate::register::SysRegWrite for Hcr {}
 impl Hcr {
     #[inline]
     /// Writes HCR (*Hyp Configuration Register*)
-    ///
-    /// # Safety
-    ///
-    /// Ensure that this value is appropriate for this register
-    pub unsafe fn write(value: Self) {
+    pub fn write(value: Self) {
         unsafe {
             <Self as SysRegWrite>::write_raw(value.raw_value());
         }
+    }
+
+    #[inline]
+    /// Modify HCR (*Hyp Configuration Register*)
+    pub fn modify<F>(f: F)
+    where
+        F: FnOnce(&mut Self),
+    {
+        let mut value = Self::read();
+        f(&mut value);
+        Self::write(value);
     }
 }
