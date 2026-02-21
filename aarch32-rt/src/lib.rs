@@ -518,7 +518,7 @@
 //! Armv7-M (and other M-Profile) processors. We must therefore save this state
 //! to the stack using assembly language, before transferring to an `extern "C"`
 //! function. We do not change modes before entering that `extern "C"` function
-//! - that's for the handler to deal with as it wishes. Because FIQ is often
+//! — that's for the handler to deal with as it wishes. Because FIQ is often
 //! performance-sensitive, we don't supply an FIQ trampoline; if you want to use
 //! FIQ, you have to write your own assembly routine, allowing you to preserve
 //! only whatever state is important to you.
