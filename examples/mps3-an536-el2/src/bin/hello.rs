@@ -4,7 +4,6 @@
 #![no_main]
 
 use aarch32_rt::entry;
-use mps3_an536_el2 as _;
 use semihosting::println;
 
 /// The entry-point to the Rust application.

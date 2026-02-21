@@ -105,35 +105,11 @@ fn handle_timer_irq() {
 #[exception(HypervisorCall)]
 fn hvc_handler(hsr: u32, frame: &aarch32_rt::Frame) -> u32 {
     let hsr = aarch32_cpu::register::Hsr::new_with_raw_value(hsr);
-    println!("In hvc_handler, with {:08x?}, {:08x?}", hsr, frame);
+    println!(
+        "In hvc_handler, with {:08x?}, {:x?}, {:08x?}",
+        hsr,
+        hsr.get_iss(),
+        frame
+    );
     return frame.r0;
 }
-
-// IRQ handler when running in EL2
-//
-// We enter this in HYP mode when an IRQ occurs, and we must leave with an
-// 'eret' instruction.
-core::arch::global_asm!(
-    r#"
-    // Work around https://github.com/rust-lang/rust/issues/127269
-    .fpu vfp3
-
-    .section .text._asm_irq_handler
-
-    // Called from the vector table when we have an interrupt.
-    .global _asm_irq_handler
-    .type _asm_irq_handler, %function
-    _asm_irq_handler:
-        push    {{ r0-r3, r12, lr }}      // push state to stack
-    "#,
-    aarch32_rt::save_fpu_context!(),
-    r#"
-        bl      _irq_handler
-    "#,
-    aarch32_rt::restore_fpu_context!(),
-    r#"
-        pop     {{ r0-r3, r12, lr }}      // pop state from stack
-        eret                              // Return from the asm handler
-    .size _asm_irq_handler, . - _asm_irq_handler
-    "#,
-);
