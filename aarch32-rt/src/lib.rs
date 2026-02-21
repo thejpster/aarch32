@@ -985,7 +985,7 @@ core::arch::global_asm!(
     "#
 );
 
-// Start-up code for Armv8-R.
+// Start-up code for Armv8-R to switch to EL1.
 //
 // There's only one Armv8-R CPU (the Cortex-R52) and the FPU is mandatory, so we
 // always enable it.
