@@ -1,0 +1,8 @@
+[import]
+filename = "Registers.json"
+
+[generate.registers.MPIDR]
+description = "Multiprocessor Affinity Register"
+
+[export]
+folder = "./target/export"

@@ -1,0 +1,18 @@
+[package]
+name = "gen-aarch32-cpu"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.102"
+arm-sysregs-json = "0.5.0"
+clap = { version = "4.6.0", features = ["derive"] }
+env_logger = "0.11.9"
+log = "0.4.29"
+serde = "1.0.228"
+serde_json = "1.0.149"
+serde_toml = "0.0.1"
+toml = "1.0.6"
+
+[profile.dev]
+opt-level = 1
