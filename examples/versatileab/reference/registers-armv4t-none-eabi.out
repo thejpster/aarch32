@@ -1,5 +1,4 @@
-MIDR { implementer=0x41 variant=0x0 arch=0x6 part_no=0x926 rev=0x5 }
-CPSR { N=0 Z=1 C=1 V=0 Q=0 J=0 E=0 A=1 I=1 F=1 T=0 MODE=Ok(Sys) }
-Mpidr(41069265)
-SCTLR { IE=0 TE=0 NMFI=0 EE=0 U=0 FI=0 DZ=0 BR=0 RR=0 V=0 I=0 Z=0 SW=0 C=0 A=0 M=0 } before setting C, I and Z
-SCTLR { IE=0 TE=0 NMFI=0 EE=0 U=0 FI=0 DZ=0 BR=0 RR=0 V=0 I=1 Z=1 SW=0 C=1 A=0 M=0 } after
+Midr { implementer: 41, part_no: 926, rev: 5 }
+CPSR { N=0 Z=1 C=1 V=0 I=1 F=1 T=0 MODE=Ok(Sys) }
+SCTLR { I=0 Z=0 F=0 R=0 S=0 B=0 D=1 P=1 W=1 C=0 A=0 M=0 } before setting C, I and Z
+SCTLR { I=1 Z=1 F=0 R=0 S=0 B=0 D=1 P=1 W=1 C=1 A=0 M=0 } after

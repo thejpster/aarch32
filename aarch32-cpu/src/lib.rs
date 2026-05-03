@@ -6,12 +6,18 @@
 #![deny(clippy::unnecessary_safety_comment)]
 #![deny(clippy::unnecessary_safety_doc)]
 
+#[cfg(all(
+    target_arch = "arm",
+    not(any(arm_architecture = "v4t", arm_architecture = "v5te"))
+))]
 pub mod cache;
+
+#[cfg(target_arch = "arm")]
 pub mod interrupt;
+
 pub mod register;
 
 #[cfg(any(
-    doc,
     arm_architecture = "v7-a",
     arm_architecture = "v7-r",
     arm_architecture = "v8-r"
@@ -20,7 +26,6 @@ pub mod register;
 pub mod asm;
 
 #[cfg(not(any(
-    doc,
     arm_architecture = "v7-a",
     arm_architecture = "v7-r",
     arm_architecture = "v8-r"
@@ -28,16 +33,16 @@ pub mod asm;
 #[path = "asmv4.rs"]
 pub mod asm;
 
-#[cfg(any(test, doc, arm_architecture = "v7-a", arm_architecture = "v8-r"))]
+#[cfg(any(arm_architecture = "v7-a", arm_architecture = "v8-r"))]
 pub mod generic_timer;
 
-#[cfg(any(test, arm_profile = "a", arm_profile = "legacy"))]
+#[cfg(any(arm_profile = "a", arm_profile = "legacy"))]
 pub mod mmu;
 
-#[cfg(any(test, arm_architecture = "v7-r"))]
+#[cfg(arm_architecture = "v7-r")]
 pub mod pmsav7;
 
-#[cfg(any(test, arm_architecture = "v8-r"))]
+#[cfg(arm_architecture = "v8-r")]
 pub mod pmsav8;
 
 #[cfg(target_arch = "arm")]

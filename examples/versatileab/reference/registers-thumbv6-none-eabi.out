@@ -1,5 +1,10 @@
-MIDR { implementer=0x41 variant=0x0 arch=0xf part_no=0xb76 rev=0x7 }
+Midr { implementer: 41, variant: 0, arch: f, part_no: b76, rev: 7 }
 CPSR { N=0 Z=1 C=1 V=0 Q=0 J=0 E=0 A=1 I=1 F=1 T=0 MODE=Ok(Sys) }
+Ctr { ctype: Ok(WriteThrough), s: true, dsize: CacheInfo { size: 7, assoc: 2, m: false, len: 2 }, isize: CacheInfo { size: 3, assoc: 2, m: false, len: 2 } }
+Cache type: Ok(WriteThrough)
+Cache kind: split
+ICache    : size=4096 bytes, assoc=_4Way, line_length=32 bytes
+DCache    : size=65536 bytes, assoc=_4Way, line_length=32 bytes
 Mpidr(410fb767)
 SCTLR { IE=0 TE=0 NMFI=0 EE=0 U=0 FI=0 DZ=1 BR=0 RR=0 V=0 I=0 Z=0 SW=0 C=0 A=0 M=0 } before setting C, I and Z
 SCTLR { IE=0 TE=0 NMFI=0 EE=0 U=0 FI=0 DZ=1 BR=0 RR=0 V=0 I=1 Z=1 SW=0 C=1 A=0 M=0 } after

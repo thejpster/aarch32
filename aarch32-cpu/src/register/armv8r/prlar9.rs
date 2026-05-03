@@ -1,6 +1,7 @@
 //! Code for managing PRLAR9 (*Protection Region Limit Address Register 9*)
 
-use crate::register::{Prlar, SysReg, SysRegRead, SysRegWrite};
+use super::Prlar;
+use crate::register::{SysReg, SysRegRead, SysRegWrite};
 
 /// PRLAR9 (*Protection Region Limit Address Register 9*)
 #[derive(Debug, Clone, Copy)]

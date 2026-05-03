@@ -46,15 +46,15 @@ extern "C" fn unaligned_from_a32() {
 }
 
 fn enable_alignment_check() {
-    let mut hsctrl = Hsctlr::read();
-    hsctrl.set_a(true);
-    Hsctlr::write(hsctrl);
+    Hsctlr::modify(|s| {
+        s.set_a(true);
+    });
 }
 
 fn disable_alignment_check() {
-    let mut hsctrl = Hsctlr::read();
-    hsctrl.set_a(false);
-    Hsctlr::write(hsctrl);
+    Hsctlr::modify(|s| {
+        s.set_a(false);
+    });
 }
 
 #[exception(Undefined)]

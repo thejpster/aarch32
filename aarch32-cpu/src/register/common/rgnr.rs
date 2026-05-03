@@ -2,7 +2,7 @@
 
 use crate::register::{SysReg, SysRegRead};
 
-use super::SysRegWrite;
+use crate::register::SysRegWrite;
 
 /// RGNR (*MPU Region Number Register*)
 #[derive(Debug, Clone, Copy)]

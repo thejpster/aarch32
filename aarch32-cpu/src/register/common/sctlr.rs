@@ -1,6 +1,6 @@
 //! Code for managing SCTLR (*System Control Register*)
 
-use super::{SysReg, SysRegRead, SysRegWrite};
+use crate::register::{SysReg, SysRegRead, SysRegWrite};
 
 /// SCTLR (*System Control Register*)
 #[bitbybit::bitfield(u32)]

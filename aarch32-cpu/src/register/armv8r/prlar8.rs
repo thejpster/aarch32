@@ -1,6 +1,7 @@
 //! Code for managing PRLAR8 (*Protection Region Limit Address Register 8*)
 
-use crate::register::{Prlar, SysReg, SysRegRead, SysRegWrite};
+use super::Prlar;
+use crate::register::{SysReg, SysRegRead, SysRegWrite};
 
 /// PRLAR8 (*Protection Region Limit Address Register 8*)
 #[derive(Debug, Clone, Copy)]

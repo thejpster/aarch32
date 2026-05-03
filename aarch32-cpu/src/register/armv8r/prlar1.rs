@@ -1,6 +1,7 @@
 //! Code for managing PRLAR1 (*Protection Region Limit Address Register 1*)
 
-use crate::register::{Prlar, SysReg, SysRegRead, SysRegWrite};
+use super::Prlar;
+use crate::register::{SysReg, SysRegRead, SysRegWrite};
 
 /// PRLAR1 (*Protection Region Limit Address Register 1*)
 #[derive(Debug, Clone, Copy)]

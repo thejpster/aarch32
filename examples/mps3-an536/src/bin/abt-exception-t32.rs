@@ -47,15 +47,15 @@ extern "C" fn unaligned_from_t32() {
 }
 
 fn enable_alignment_check() {
-    let mut sctrl = Sctlr::read();
-    sctrl.set_a(true);
-    Sctlr::write(sctrl);
+    Sctlr::modify(|s| {
+        s.set_a(true);
+    });
 }
 
 fn disable_alignment_check() {
-    let mut sctrl = Sctlr::read();
-    sctrl.set_a(false);
-    Sctlr::write(sctrl);
+    Sctlr::modify(|s| {
+        s.set_a(false);
+    });
 }
 
 #[exception(Undefined)]

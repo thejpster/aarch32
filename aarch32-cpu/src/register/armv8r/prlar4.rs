@@ -1,6 +1,7 @@
 //! Code for managing PRLAR4 (*Protection Region Limit Address Register 4*)
 
-use crate::register::{Prlar, SysReg, SysRegRead, SysRegWrite};
+use super::Prlar;
+use crate::register::{SysReg, SysRegRead, SysRegWrite};
 
 /// PRLAR4 (*Protection Region Limit Address Register 4*)
 #[derive(Debug, Clone, Copy)]

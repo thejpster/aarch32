@@ -6,7 +6,9 @@
 use portable_atomic::{AtomicU32, Ordering};
 
 use aarch32_cpu::register::Sctlr;
-#[cfg(not(arm_architecture = "v4t"))]
+#[cfg(arm_architecture = "v5te")]
+use aarch32_cpu::register::Dfsr;
+#[cfg(any(arm_architecture = "v6", arm_architecture = "v7-r", arm_architecture = "v7-a"))]
 use aarch32_cpu::register::{Dfar, Dfsr};
 use aarch32_rt::{entry, exception};
 use semihosting::println;
@@ -51,15 +53,15 @@ extern "C" fn unaligned_from_a32() {
 }
 
 fn enable_alignment_check() {
-    let mut sctrl = Sctlr::read();
-    sctrl.set_a(true);
-    Sctlr::write(sctrl);
+    Sctlr::modify(|s| {
+        s.set_a(true);
+    });
 }
 
 fn disable_alignment_check() {
-    let mut sctrl = Sctlr::read();
-    sctrl.set_a(false);
-    Sctlr::write(sctrl);
+    Sctlr::modify(|s| {
+        s.set_a(false);
+    });
 }
 
 #[exception(Undefined)]
@@ -76,7 +78,15 @@ fn prefetch_abort_handler(_addr: usize) -> ! {
 unsafe fn data_abort_handler(addr: usize) -> usize {
     println!("data abort occurred");
 
-    #[cfg(not(arm_architecture = "v4t"))]
+    #[cfg(arm_architecture = "v5te")]
+    {
+        disable_alignment_check();
+        let dfsr = Dfsr::read();
+        println!("DFSR (Fault Status Register): {:?}", dfsr);
+        enable_alignment_check();
+    }
+
+    #[cfg(any(arm_architecture = "v6", arm_architecture = "v7-r", arm_architecture = "v7-a"))]
     {
         // If this is not disabled, reading DFAR will trigger an alignment fault on Armv8-R, leading
         // to a loop.

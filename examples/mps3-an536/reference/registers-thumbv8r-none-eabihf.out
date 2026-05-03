@@ -1,4 +1,4 @@
-MIDR { implementer=0x41 variant=0x1 arch=0xf part_no=0xd13 rev=0x3 }
+Midr { implementer: 41, variant: 1, arch: f, part_no: d13, rev: 3 }
 CPSR { N=0 Z=1 C=1 V=0 Q=0 J=0 E=0 A=0 I=1 F=1 T=0 MODE=Ok(Sys) }
 IMP_CBAR { 0xf0000000 }
 Vbar(8000000)

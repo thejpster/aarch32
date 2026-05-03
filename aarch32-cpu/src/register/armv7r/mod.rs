@@ -1,0 +1,145 @@
+//! Registers available on Armv7-R
+
+// These modules have extra types in we want to export
+
+pub mod ctr;
+pub mod dfsr;
+pub mod ifsr;
+
+#[doc(inline)]
+pub use ctr::Ctr;
+#[doc(inline)]
+pub use dfsr::Dfsr;
+#[doc(inline)]
+pub use ifsr::Ifsr;
+
+#[doc(inline)]
+pub use super::armv6::Midr;
+
+// Export all the common registers that apply here (and sub-modules where useful)
+
+pub use super::common::actlr::Actlr;
+pub use super::common::actlr2::Actlr2;
+pub use super::common::adfsr::Adfsr;
+pub use super::common::aidr::Aidr;
+pub use super::common::aifsr::Aifsr;
+pub use super::common::amair0::Amair0;
+pub use super::common::amair1::Amair1;
+pub use super::common::bpiall::BpIAll;
+pub use super::common::ccsidr::Ccsidr;
+pub use super::common::clidr::Clidr;
+pub use super::common::contextidr::Contextidr;
+pub use super::common::cpacr::Cpacr;
+pub use super::common::cpsr::{self, Cpsr};
+pub use super::common::csselr::Csselr;
+pub use super::common::dacr::{self, Dacr};
+pub use super::common::dccimvac::Dccimvac;
+pub use super::common::dccisw::Dccisw;
+pub use super::common::dccmvac::Dccmvac;
+pub use super::common::dccmvau::Dccmvau;
+pub use super::common::dccsw::Dccsw;
+pub use super::common::dcimvac::Dcimvac;
+pub use super::common::dcisw::Dcisw;
+pub use super::common::dfar::Dfar;
+pub use super::common::dlr::Dlr;
+pub use super::common::dracr::Dracr;
+pub use super::common::drbar::Drbar;
+pub use super::common::drsr::{self, Drsr};
+pub use super::common::dspsr::Dspsr;
+pub use super::common::fcseidr::Fcseidr;
+pub use super::common::icc_pmr::IccPmr;
+pub use super::common::iciallu::Iciallu;
+pub use super::common::id_afr0::IdAfr0;
+pub use super::common::id_dfr0::IdDfr0;
+pub use super::common::id_isar0::IdIsar0;
+pub use super::common::id_isar1::IdIsar1;
+pub use super::common::id_isar2::IdIsar2;
+pub use super::common::id_isar3::IdIsar3;
+pub use super::common::id_isar4::IdIsar4;
+pub use super::common::id_isar5::IdIsar5;
+pub use super::common::id_mmfr0::IdMmfr0;
+pub use super::common::id_mmfr1::IdMmfr1;
+pub use super::common::id_mmfr2::IdMmfr2;
+pub use super::common::id_mmfr3::IdMmfr3;
+pub use super::common::id_mmfr4::IdMmfr4;
+pub use super::common::id_pfr0::IdPfr0;
+pub use super::common::id_pfr1::IdPfr1;
+pub use super::common::ifar::Ifar;
+pub use super::common::imp_atcmregionr::ImpAtcmregionr;
+pub use super::common::imp_bpctlr::ImpBpctlr;
+pub use super::common::imp_btcmregionr::ImpBtcmregionr;
+pub use super::common::imp_buildoptr::ImpBuildoptr;
+pub use super::common::imp_bustimeoutr::ImpBustimeoutr;
+pub use super::common::imp_cbar::ImpCbar;
+pub use super::common::imp_cdbgdcd::ImpCdbgdcd;
+pub use super::common::imp_cdbgdci::ImpCdbgdci;
+pub use super::common::imp_cdbgdct::ImpCdbgdct;
+pub use super::common::imp_cdbgdr0::ImpCdbgdr0;
+pub use super::common::imp_cdbgdr1::ImpCdbgdr1;
+pub use super::common::imp_cdbgdr2::ImpCdbgdr2;
+pub use super::common::imp_cdbgicd::ImpCdbgicd;
+pub use super::common::imp_cdbgict::ImpCdbgict;
+pub use super::common::imp_csctlr::ImpCsctlr;
+pub use super::common::imp_ctcmregionr::ImpCtcmregionr;
+pub use super::common::imp_dcerr0::ImpDcerr0;
+pub use super::common::imp_dcerr1::ImpDcerr1;
+pub use super::common::imp_flasherr0::ImpFlasherr0;
+pub use super::common::imp_flasherr1::ImpFlasherr1;
+pub use super::common::imp_flashifregionr::ImpFlashifregionr;
+pub use super::common::imp_icerr0::ImpIcerr0;
+pub use super::common::imp_icerr1::ImpIcerr1;
+pub use super::common::imp_intmonr::ImpIntmonr;
+pub use super::common::imp_memprotctlr::ImpMemprotctlr;
+pub use super::common::imp_periphpregionr::ImpPeriphpregionr;
+pub use super::common::imp_pinoptr::ImpPinoptr;
+pub use super::common::imp_qosr::ImpQosr;
+pub use super::common::imp_slavepctlr::ImpSlavepctlr;
+pub use super::common::imp_tcmerr0::ImpTcmerr0;
+pub use super::common::imp_tcmerr1::ImpTcmerr1;
+pub use super::common::imp_tcmsyndr0::ImpTcmsyndr0;
+pub use super::common::imp_tcmsyndr1::ImpTcmsyndr1;
+pub use super::common::imp_testr0::ImpTestr0;
+pub use super::common::iracr::Iracr;
+pub use super::common::irbar::Irbar;
+pub use super::common::irsr::Irsr;
+pub use super::common::mair0::{Mair, Mair0};
+pub use super::common::mair1::Mair1;
+pub use super::common::mpidr::Mpidr;
+pub use super::common::mpuir::Mpuir;
+pub use super::common::nsacr::Nsacr;
+pub use super::common::par::Par;
+pub use super::common::pmccfiltr::Pmccfiltr;
+pub use super::common::pmccntr::Pmccntr;
+pub use super::common::pmceid0::Pmceid0;
+pub use super::common::pmceid1::Pmceid1;
+pub use super::common::pmcntenclr::Pmcntenclr;
+pub use super::common::pmcntenset::Pmcntenset;
+pub use super::common::pmcr::Pmcr;
+pub use super::common::pmevcntr0::Pmevcntr0;
+pub use super::common::pmevcntr1::Pmevcntr1;
+pub use super::common::pmevcntr2::Pmevcntr2;
+pub use super::common::pmevcntr3::Pmevcntr3;
+pub use super::common::pmevtyper0::Pmevtyper0;
+pub use super::common::pmevtyper1::Pmevtyper1;
+pub use super::common::pmevtyper2::Pmevtyper2;
+pub use super::common::pmevtyper3::Pmevtyper3;
+pub use super::common::pmintenclr::Pmintenclr;
+pub use super::common::pmintenset::Pmintenset;
+pub use super::common::pmovsr::Pmovsr;
+pub use super::common::pmovsset::Pmovsset;
+pub use super::common::pmselr::Pmselr;
+pub use super::common::pmswinc::Pmswinc;
+pub use super::common::pmuserenr::Pmuserenr;
+pub use super::common::pmxevcntr::Pmxevcntr;
+pub use super::common::pmxevtyper::Pmxevtyper;
+pub use super::common::revidr::Revidr;
+pub use super::common::rgnr::Rgnr;
+pub use super::common::rvbar::Rvbar;
+pub use super::common::sctlr::Sctlr;
+pub use super::common::tcmtr::Tcmtr;
+pub use super::common::tpidrprw::Tpidrprw;
+pub use super::common::tpidruro::Tpidruro;
+pub use super::common::tpidrurw::Tpidrurw;
+pub use super::common::vmpidr::Vmpidr;
+pub use super::common::vpidr::Vpidr;
+pub use super::common::vsctlr::Vsctlr;

@@ -1,6 +1,6 @@
 //! Code for managing MAIR1 (*Memory Attribute Indirection Register 1*)
 
-use super::Mair;
+use super::mair0::Mair;
 use crate::register::{SysReg, SysRegRead, SysRegWrite};
 
 /// MAIR1 (*Memory Attribute Indirection Register 1*)

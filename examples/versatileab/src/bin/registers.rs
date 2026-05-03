@@ -23,6 +23,43 @@ fn main() -> ! {
 fn chip_info() {
     println!("{:x?}", aarch32_cpu::register::Midr::read());
     println!("{:x?}", aarch32_cpu::register::Cpsr::read());
+
+    #[cfg(any(arm_architecture = "v5te", arm_architecture = "v6"))]
+    {
+        let ctr = aarch32_cpu::register::Ctr::read();
+        println!("{:x?}", ctr);
+        println!("Cache type: {:?}", ctr.ctype());
+        if ctr.s() {
+            println!("Cache kind: split");
+            println!(
+                "ICache    : size={} bytes, assoc={:?}, line_length={} bytes",
+                ctr.isize().size_bytes(),
+                ctr.isize().associativity(),
+                ctr.isize().cache_line_length_bytes()
+            );
+            println!(
+                "DCache    : size={} bytes, assoc={:?}, line_length={} bytes",
+                ctr.dsize().size_bytes(),
+                ctr.dsize().associativity(),
+                ctr.dsize().cache_line_length_bytes()
+            );
+        } else {
+            println!("Cache kind: unified");
+            println!(
+                "Cache    : size={} bytes, assoc={:?}, line_length={} bytes",
+                ctr.isize().size_bytes(),
+                ctr.isize().associativity(),
+                ctr.isize().cache_line_length_bytes()
+            );
+        }
+    }
+    #[cfg(any(arm_architecture = "v7-r", arm_architecture = "v7-a"))]
+    {
+        let ctr = aarch32_cpu::register::Ctr::read();
+        println!("{:08x?}", ctr);
+    }
+
+    #[cfg(not(any(arm_architecture = "v4t", arm_architecture = "v5te")))]
     println!("{:x?}", aarch32_cpu::register::Mpidr::read());
 }
 

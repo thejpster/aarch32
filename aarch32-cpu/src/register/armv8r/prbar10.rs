@@ -1,6 +1,7 @@
 //! Code for managing PRBAR10 (*Protection Region Base Address Register 10*)
 
-use crate::register::{Prbar, SysReg, SysRegRead, SysRegWrite};
+use super::Prbar;
+use crate::register::{SysReg, SysRegRead, SysRegWrite};
 
 /// PRBAR10 (*Protection Region Base Address Register 10*)
 #[derive(Debug, Clone, Copy)]
