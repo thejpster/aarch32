@@ -1,4 +1,4 @@
-//! Generic-timer example for Arm Cortex-R52
+//! Generic-timer example for Armv7-A on Arm Versatile
 
 #![no_std]
 #![no_main]
