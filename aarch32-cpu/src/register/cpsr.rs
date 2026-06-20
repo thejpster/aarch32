@@ -27,7 +27,7 @@ pub enum ProcessorMode {
 }
 
 /// CPSR (*Current Program Status Register*)
-#[bitbybit::bitfield(u32)]
+#[bitbybit::bitfield(u32, debug, defmt_bitfields(feature = "defmt"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Cpsr {
     /// Negative Result from ALU
@@ -142,33 +142,5 @@ impl Cpsr {
         unsafe {
             Self::write(value);
         }
-    }
-}
-
-impl core::fmt::Debug for Cpsr {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(
-            f,
-            "CPSR {{ N={} Z={} C={} V={} Q={} J={} E={} A={} I={} F={} T={} MODE={:?} }}",
-            self.n() as u8,
-            self.z() as u8,
-            self.c() as u8,
-            self.v() as u8,
-            self.q() as u8,
-            self.j() as u8,
-            self.e() as u8,
-            self.a() as u8,
-            self.i() as u8,
-            self.f() as u8,
-            self.t() as u8,
-            self.mode(),
-        )
-    }
-}
-
-#[cfg(feature = "defmt")]
-impl defmt::Format for Cpsr {
-    fn format(&self, f: defmt::Formatter) {
-        defmt::write!(f, "CPSR {{ N={0=31..32} Z={0=30..31} C={0=29..30} V={0=28..29} Q={0=27..28} J={0=24..25} E={0=9..10} A={0=8..9} I={0=7..8} F={0=6..7} T={0=5..6} MODE={0=0..5} }}", self.raw_value())
     }
 }

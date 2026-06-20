@@ -3,7 +3,7 @@
 use crate::register::{SysReg, SysRegRead, SysRegWrite};
 
 /// HACTRL (*Hyp Auxiliary Control Register*)
-#[bitbybit::bitfield(u32)]
+#[bitbybit::bitfield(u32, debug, defmt_bitfields(feature = "defmt"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Hactlr {
     /// Controls access to IMP_TESTR1 at EL0 and EL1
@@ -73,28 +73,5 @@ impl Hactlr {
         let mut value = Self::read();
         f(&mut value);
         Self::write(value);
-    }
-}
-
-impl core::fmt::Debug for Hactlr {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "HACTLR {{ CPUACTLR={}, CDBGDCI={}, FLASHIFREGIONR={}, PERIPHPREGIONR={}, QOSR={}, BUSTIMEOUTR={}, INTMONR={}, ERR={}, TESTR1={} }}",
-            self.cpuactlr() as u8,
-            self.cdbgdci() as u8,
-            self.flashifregionr() as u8,
-            self.periphpregionr() as u8,
-            self.qosr() as u8,
-            self.bustimeoutr() as u8,
-            self.intmonr() as u8,
-            self.err() as u8,
-            self.testr1() as u8
-        )
-    }
-}
-
-#[cfg(feature = "defmt")]
-impl defmt::Format for Hactlr {
-    fn format(&self, f: defmt::Formatter) {
-        defmt::write!(f, "HACTLR {{ CPUACTLR={0=0..1}, CDBGDCI={0=1..2}, FLASHIFREGIONR={0=7..8}, PERIPHPREGIONR={0=8..9}, QOSR={0=9..10}, BUSTIMEOUTR={0=10..11}, INTMONR={0=12..13}, ERR={0=13..14}, TESTR1={0=15..16} }}", self.raw_value())
     }
 }

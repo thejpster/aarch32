@@ -1,6 +1,6 @@
 Hello, this is semihosting! x = 1.000, y = 2.000
-SCTLR { IE=0 TE=0 NMFI=0 EE=0 U=1 FI=0 DZ=1 BR=0 RR=0 V=0 I=0 Z=1 SW=0 C=0 A=0 M=0 }
-CPSR { N=0 Z=1 C=1 V=0 Q=0 J=0 E=0 A=1 I=1 F=1 T=0 MODE=Ok(Hyp) }
+Sctlr { ie: false, te: false, nmfi: false, ee: false, u: true, fi: false, dz: true, br: false, rr: false, v: false, i: false, z: true, sw: false, c: false, a: false, m: false }
+Cpsr { n: false, z: true, c: true, v: false, q: false, j: false, e: false, a: true, i: true, f: true, t: false, mode: Ok(Hyp) }
 Region 0: El2Region { range: 0x0..=0x3f, shareability: NonShareable, access: ReadWriteNoEL10, no_exec: false, mair: 0, enable: false }
 Region 1: El2Region { range: 0x0..=0x3f, shareability: NonShareable, access: ReadWriteNoEL10, no_exec: false, mair: 0, enable: false }
 Region 2: El2Region { range: 0x0..=0x3f, shareability: NonShareable, access: ReadWriteNoEL10, no_exec: false, mair: 0, enable: false }

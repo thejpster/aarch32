@@ -3,7 +3,7 @@
 use crate::register::{SysReg, SysRegRead};
 
 /// MPUIR (*MPU Type Register*)
-#[bitbybit::bitfield(u32)]
+#[bitbybit::bitfield(u32, debug, defmt_bitfields(feature = "defmt"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Mpuir {
     /// Specifies the number of Instruction regions implemented by the MPU.
@@ -34,28 +34,5 @@ impl Mpuir {
     /// Reads MPUIR (*MPU Type Register*)
     pub fn read() -> Mpuir {
         Self::new_with_raw_value(<Self as SysRegRead>::read_raw())
-    }
-}
-
-impl core::fmt::Debug for Mpuir {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("Mpuir")
-            .field("iregions", &self.iregions())
-            .field("dregions", &self.dregions())
-            .field("non_unified", &self.non_unified())
-            .finish()
-    }
-}
-
-#[cfg(feature = "defmt")]
-impl defmt::Format for Mpuir {
-    fn format(&self, f: defmt::Formatter) {
-        defmt::write!(
-            f,
-            "MPUIR {{ iregions={=u8}, dregions={=u8}, non_unified={=bool} }}",
-            self.iregions(),
-            self.dregions(),
-            self.non_unified()
-        )
     }
 }

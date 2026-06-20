@@ -3,7 +3,7 @@
 use super::{SysReg, SysRegRead, SysRegWrite};
 
 /// SCTLR (*System Control Register*)
-#[bitbybit::bitfield(u32)]
+#[bitbybit::bitfield(u32, debug, defmt_bitfields(feature = "defmt"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Sctlr {
     /// The bitmask for the Instruction Endianness bit
@@ -99,37 +99,5 @@ impl Sctlr {
             core::arch::asm!("dsb");
             core::arch::asm!("isb");
         }
-    }
-}
-
-impl core::fmt::Debug for Sctlr {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(
-            f,
-            "SCTLR {{ IE={} TE={} NMFI={} EE={} U={} FI={} DZ={} BR={} RR={} V={} I={} Z={} SW={} C={} A={} M={} }}",
-            self.ie() as u8,
-            self.te() as u8,
-            self.nmfi() as u8,
-            self.ee() as u8,
-            self.u() as u8,
-            self.fi() as u8,
-            self.dz() as u8,
-            self.br() as u8,
-            self.rr() as u8,
-            self.v() as u8,
-            self.i() as u8,
-            self.z() as u8,
-            self.sw() as u8,
-            self.c() as u8,
-            self.a() as u8,
-            self.m() as u8,
-        )
-    }
-}
-
-#[cfg(feature = "defmt")]
-impl defmt::Format for Sctlr {
-    fn format(&self, f: defmt::Formatter) {
-        defmt::write!(f, "SCTLR {{ IE={0=31..32} TE={0=30..31} NMFI={0=27..28} EE={0=25..26} U={0=22..23} FI={0=21..22} DZ={0=18..19} BR={0=17..18} RR={0=14..15} V={0=13..14} I={0=12..13} Z={0=11..12} SW={0=10..11} C={0=2..3} A={0=1..2} M={0=0..1} }}", self.raw_value())
     }
 }
