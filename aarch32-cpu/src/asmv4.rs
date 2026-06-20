@@ -100,10 +100,7 @@ pub fn fiq_enable() {
 ///
 /// Return the bottom 24-bits of the MPIDR
 #[cfg_attr(not(feature = "check-asm"), inline)]
-#[cfg(all(
-    target_arch = "arm",
-    not(any(arm_architecture = "v4t", arm_architecture = "v5te"))
-))]
+#[cfg(armv6_or_higher)]
 #[instruction_set(arm::a32)]
 pub fn core_id() -> u32 {
     let r: u32;

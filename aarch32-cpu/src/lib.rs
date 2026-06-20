@@ -6,10 +6,7 @@
 #![deny(clippy::unnecessary_safety_comment)]
 #![deny(clippy::unnecessary_safety_doc)]
 
-#[cfg(all(
-    target_arch = "arm",
-    not(any(arm_architecture = "v4t", arm_architecture = "v5te"))
-))]
+#[cfg(armv6_or_higher)]
 pub mod cache;
 
 #[cfg(target_arch = "arm")]
@@ -17,19 +14,11 @@ pub mod interrupt;
 
 pub mod register;
 
-#[cfg(any(
-    arm_architecture = "v7-a",
-    arm_architecture = "v7-r",
-    arm_architecture = "v8-r"
-))]
+#[cfg(armv7_or_higher)]
 #[path = "asmv7.rs"]
 pub mod asm;
 
-#[cfg(not(any(
-    arm_architecture = "v7-a",
-    arm_architecture = "v7-r",
-    arm_architecture = "v8-r"
-)))]
+#[cfg(armv6_or_lower)]
 #[path = "asmv4.rs"]
 pub mod asm;
 

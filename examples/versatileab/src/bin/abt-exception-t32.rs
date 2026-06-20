@@ -5,10 +5,10 @@
 
 use portable_atomic::{AtomicU32, Ordering};
 
-use aarch32_cpu::register::Sctlr;
 #[cfg(arm_architecture = "v5te")]
 use aarch32_cpu::register::Dfsr;
-#[cfg(any(arm_architecture = "v6", arm_architecture = "v7-r", arm_architecture = "v7-a"))]
+use aarch32_cpu::register::Sctlr;
+#[cfg(armv6_or_higher)]
 use aarch32_cpu::register::{Dfar, Dfsr};
 use aarch32_rt::{entry, exception};
 use semihosting::println;
@@ -86,7 +86,7 @@ unsafe fn data_abort_handler(addr: usize) -> usize {
         enable_alignment_check();
     }
 
-    #[cfg(any(arm_architecture = "v6", arm_architecture = "v7-r", arm_architecture = "v7-a"))]
+    #[cfg(armv6_or_higher)]
     {
         // If this is not disabled, reading DFAR will trigger an alignment fault on Armv8-R, leading
         // to a loop.

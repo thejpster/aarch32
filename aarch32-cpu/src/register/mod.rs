@@ -59,14 +59,7 @@ pub trait SysRegRead: SysReg {
     /// side-effects that can cause Undefined Behaviour, so this method
     /// is safe.
     #[cfg_attr(not(feature = "check-asm"), inline)]
-    #[cfg_attr(
-        any(
-            arm_architecture = "v4t",
-            arm_architecture = "v5te",
-            arm_architecture = "v6"
-        ),
-        instruction_set(arm::a32)
-    )]
+    #[cfg_attr(armv6_or_lower, instruction_set(arm::a32))]
     fn read_raw() -> u32 {
         let r: u32;
         #[cfg(target_arch = "arm")]
@@ -99,14 +92,7 @@ pub trait SysRegWrite: SysReg {
     /// You need to read the Architecture Reference Manual to verify that you are
     /// writing valid data here.
     #[cfg_attr(not(feature = "check-asm"), inline)]
-    #[cfg_attr(
-        any(
-            arm_architecture = "v4t",
-            arm_architecture = "v5te",
-            arm_architecture = "v6"
-        ),
-        instruction_set(arm::a32)
-    )]
+    #[cfg_attr(armv6_or_lower, instruction_set(arm::a32))]
     unsafe fn write_raw(_value: u32) {
         #[cfg(target_arch = "arm")]
         unsafe {
@@ -133,14 +119,7 @@ pub trait SysRegTrigger: SysReg {
     /// You need to read the Architecture Reference Manual to verify that the side-effects
     /// of this action are acceptable.
     #[cfg_attr(not(feature = "check-asm"), inline)]
-    #[cfg_attr(
-        any(
-            arm_architecture = "v4t",
-            arm_architecture = "v5te",
-            arm_architecture = "v6"
-        ),
-        instruction_set(arm::a32)
-    )]
+    #[cfg_attr(armv6_or_lower, instruction_set(arm::a32))]
     unsafe fn trigger() {
         #[cfg(target_arch = "arm")]
         unsafe {

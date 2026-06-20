@@ -30,7 +30,7 @@ pub mod pac7;
 pub mod sctlr;
 
 #[doc(inline)]
-pub use access_permissions::{AccessPermissions, AccessPermission};
+pub use access_permissions::{AccessPermission, AccessPermissions};
 #[doc(inline)]
 pub use bufferability::Bufferability;
 #[doc(inline)]

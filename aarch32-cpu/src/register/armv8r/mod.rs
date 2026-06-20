@@ -1,6 +1,9 @@
 //! Registers available on Armv8-R
 
+pub mod ctr;
+pub mod dfsr;
 pub mod hmpuir;
+pub mod hprbar;
 pub mod hprbar0;
 pub mod hprbar1;
 pub mod hprbar10;
@@ -36,6 +39,8 @@ pub mod hprlar7;
 pub mod hprlar8;
 pub mod hprlar9;
 pub mod hprselr;
+pub mod ifsr;
+pub mod prbar;
 pub mod prbar0;
 pub mod prbar1;
 pub mod prbar10;
@@ -70,11 +75,6 @@ pub mod prlar7;
 pub mod prlar8;
 pub mod prlar9;
 pub mod prselr;
-pub mod ctr;
-pub mod dfsr;
-pub mod hprbar;
-pub mod ifsr;
-pub mod prbar;
 
 #[doc(inline)]
 pub use ctr::Ctr;
@@ -230,8 +230,8 @@ pub use prselr::Prselr;
 #[doc(inline)]
 pub use super::armv6::Midr;
 
-pub use super::hyp::*;
 pub use super::generic_timer::*;
+pub use super::hyp::*;
 
 // Export all the common registers that apply here (and sub-modules where useful)
 
